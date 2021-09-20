@@ -1,0 +1,93 @@
+name: "test"
+
+# Whether to use MLflow for tracking
+with_mlflow: false
+
+# Toggles validation on test
+val_on_test: false
+
+# MLflow tags
+tags: {}
+
+# Pre-trained model for multiclass training
+from_segment_model: null
+
+# Keyword args for Trainer
+trainer:
+  resume_from_checkpoint: null
+  max_epochs: 100
+  gpus: 0
+  auto_select_gpus: false
+
+# Train dataset config
+dataset:
+  cls: polypnet.data.cvc.CvcDataset
+  kwargs: {}
+
+# Val dataset config
+val_dataset:
+  split_from_train: true
+  split_ratio: 0.1
+  split_seed: 57
+  cls: polypnet.data.cvc.CvcDataset
+  kwargs: {}
+
+# Train/val loader config
+loader:
+  batch_size: 2
+  num_workers: 1
+
+# Test dataset config
+test_datasets: []
+
+# Test loader config
+test_loader:
+  num_workers: 1
+
+# Model config
+model:
+  cls: polypnet.model.eff.AttnEfficientNetUnet
+  kwargs: {}
+
+# Model wrapper config
+wrapper:
+  kwargs: {}
+
+# Toggles adaptive gradient clipping
+agc:
+  enabled: false
+  kwargs: {}
+
+# Optimizer config
+optimizer:
+  cls: torch.optim.Adam
+  kwargs:
+    lr: 1.e-2
+
+# LR scheduler config
+scheduler:
+  cls: polypnet.optim.warmup_cos.CosineAnnealingWarmupLR
+  kwargs: {}
+
+# Callback configs
+callbacks:
+  early_stop:
+    patience: 10
+  result_sample:
+    images_per_epoch: 5
+    skip_first: 5
+
+# Augmentation config
+augment:
+  kwargs:
+    prob: 0.7
+
+# Loss configs
+loss:
+  kwargs: {}
+  losses: []
+
+# Classification loss configs
+label_loss:
+  kwargs: {}
+  losses: []

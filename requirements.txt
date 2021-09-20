@@ -1,0 +1,10 @@
+mlflow==1.12.1
+omegaconf==2.0.5
+pytorch-lightning==1.2.6
+loguru==0.5.3
+Pillow<7
+efficientnet_pytorch==0.7.0
+google-cloud-storage==1.33.0
+albumentations==0.5.2
+gcsfs==0.7.1
+boto3==1.17

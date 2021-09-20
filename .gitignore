@@ -1,0 +1,4 @@
+.vscode/
+*.pyc
+.auth
+config/tmp.yml

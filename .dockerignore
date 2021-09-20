@@ -1,0 +1,7 @@
+data/
+config/
+results/
+auth/
+.*
+Dockerfile
+Makefile

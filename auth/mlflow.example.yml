@@ -1,0 +1,7 @@
+user: foo
+password: bar
+url: mlflow.example.com
+s3_endpoint: s3.example.com
+protocol: https
+aws_key: key
+aws_secret: secret
