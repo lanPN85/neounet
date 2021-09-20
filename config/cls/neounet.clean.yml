@@ -61,7 +61,7 @@ test_loader:
   num_workers: 2
 
 model:
-  cls: polypnet.model.hardnet.NeoUNet
+  cls: polypnet.model.neounet.NeoUNet
   kwargs:
     num_classes: 2
 

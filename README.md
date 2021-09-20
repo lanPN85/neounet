@@ -13,8 +13,8 @@ For non-Docker users:
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the example on ClinicDB
-./train.py -c config/test1.yml --name test
+# Run demo
+./train_seg.py -c config/seg/demo.yml
 ```
 
 For Docker users:
@@ -22,12 +22,12 @@ For Docker users:
 # Build the Docker image
 make image-gpu  # Change to 'make image' if running on CPU
 
-# Run the example on ClinicDB
-make train CONFIG=config/test1.yml EXP_NAME=test
+# Run demo
+make train-seg CONFIG=config/seg/demo.yml
 ```
 
 ## Configuration guide
-Configs are written in `.yaml` files. See `config/defaults.yml` for a full example.
+Configs are written in YAML files. See `config/defaults.yml` for a full example.
 
 Modules like `dataset` and `model` are configured by specifying the Python class (`cls`) and keyword arguments (`kwargs`). The class is specified by its full Python path (loaded using `pydoc.locate()`). For example, this configuration:
 ```yaml

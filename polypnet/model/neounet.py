@@ -74,8 +74,10 @@ class NeoUNet(nn.Module):
         :return: List of output for each level
         """
 
+        # Output for each encoder block
         o0, o1, o2, o3, o4 = self.encoder.forward_2(x)
 
+        # Bottom decoder
         attn_mid = self.attn_mid(o3, o4)
         up_mid = self.upsample_mid(o4)
 
@@ -100,6 +102,7 @@ class NeoUNet(nn.Module):
         decode_0 = self.decode0(merged_0)
         out_0 = self.out0(decode_0)
 
+        # Generate decoder outputs
         output_size = x.size()[2:]
         out_0 = F.interpolate(out_0, size=output_size, mode="bilinear")
         out_1 = F.interpolate(out_1, size=output_size, mode="bilinear")

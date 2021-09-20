@@ -1,13 +1,12 @@
-name: NeoUNet.FullDataset.1
+name: NeoUNet.Demo
 
 val_on_test: true
 from_segment_model: null
 
 trainer:
   resume_from_checkpoint: null
-  max_epochs: 200
-  min_epochs: 20
-  gpus: 1
+  max_epochs: 2
+  gpus: 0
   auto_select_gpus: true
 
 dataset:
@@ -19,7 +18,7 @@ dataset:
 
 loader:
   batch_size: 12
-  num_workers: 16
+  num_workers: 4
 
 test_datasets:
 - cls: polypnet.data.full.FullDataset
@@ -80,7 +79,7 @@ callbacks:
   early_stop:
     patience: 30
   result_sample:
-    images_per_epoch: 20
+    images_per_epoch: 5
     skip_first: 5
 
 augment:
