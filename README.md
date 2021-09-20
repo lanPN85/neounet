@@ -1,4 +1,4 @@
-# U-Net for polyp detection
+# NeoUNet
 
 ## Requirements
 - Python 3.6+
