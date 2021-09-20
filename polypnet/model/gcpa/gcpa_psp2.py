@@ -12,7 +12,7 @@ from .encoders import hardnet
 class GCPAPSP2Net(nn.Module):
     @property
     def output_scales(self):
-        return 1., 1., 1., 1.
+        return 1.0, 1.0, 1.0, 1.0
 
     def __init__(self, num_classes=1, pretrained=True):
         super(GCPAPSP2Net, self).__init__()
@@ -60,10 +60,9 @@ class GCPAPSP2Net(nn.Module):
         out3_c = self.local_attention_3(out5_c)  # bs, 256, 11, 11
         out2_c = self.local_attention_2(out5_c)  # bs, 256, 11, 11
 
-
         # out
         out4 = self.fam45(out4, out4_c, out5)
-        out3 = self.fam34(out3, out3_c ,out4)
+        out3 = self.fam34(out3, out3_c, out4)
         out2 = self.fam23(out2, out2_c, out3)
 
         # we use bilinear interpolation instead of transpose convolution

@@ -8,15 +8,10 @@ from collections import namedtuple
 from scipy.optimize import linear_sum_assignment
 from typing import List, Tuple
 
-_Object = namedtuple("Object", [
-    "mask", "index"
-])
+_Object = namedtuple("Object", ["mask", "index"])
 
 
-def label_object_count(
-    pred_mask, true_mask,
-    ignore_mask=None, dim=0
-):
+def label_object_count(pred_mask, true_mask, ignore_mask=None, dim=0):
     """
     :param pred_mask: Tensor of shape [2 x H x W]
     :param true_mask: Tensor of shape [2 x H x W]
@@ -31,10 +26,7 @@ def label_object_count(
     return len(objects)
 
 
-def pred_object_count(
-    pred_mask, true_mask,
-    ignore_mask=None, dim=0
-):
+def pred_object_count(pred_mask, true_mask, ignore_mask=None, dim=0):
     """
     :param pred_mask: Tensor of shape [2 x H x W]
     :param true_mask: Tensor of shape [2 x H x W]
@@ -49,10 +41,7 @@ def pred_object_count(
     return len(objects)
 
 
-def true_object_count(
-    pred_mask, true_mask,
-    ignore_mask=None, iou=0.7, dim=0
-):
+def true_object_count(pred_mask, true_mask, ignore_mask=None, iou=0.7, dim=0):
     """
     :param pred_mask: Tensor of shape [2 x H x W]
     :param true_mask: Tensor of shape [2 x H x W]
@@ -77,8 +66,7 @@ def true_object_count(
 
 
 def _assign_object_pairs(
-    objects_1: List[_Object],
-    objects_2: List[_Object]
+    objects_1: List[_Object], objects_2: List[_Object]
 ) -> List[Tuple[_Object, _Object, float]]:
     iou_mat = np.zeros((len(objects_1), len(objects_2)))
 
@@ -101,10 +89,8 @@ def _iou(m1, m2):
     union = np.sum(m1) + np.sum(m2) - intersection
     return intersection / union
 
-def _objects_from_mask(
-    mask: torch.Tensor,
-    mal_ratio_cutoff=0.1
-) -> List[_Object]:
+
+def _objects_from_mask(mask: torch.Tensor, mal_ratio_cutoff=0.1) -> List[_Object]:
     m = mask.cpu().numpy()  # 2 x H x W
 
     merged_mask = np.logical_or(m[0], m[1]).astype(np.uint8)
@@ -149,8 +135,8 @@ def test_1():
     h, w = mask.shape[-2:]
     shift = 30
     shift_mask = mask[...]
-    shift_mask[:,:h-shift, ...] = mask[:, shift:,...]
-    shift_mask[:, h-shift:, ...] = 0
+    shift_mask[:, : h - shift, ...] = mask[:, shift:, ...]
+    shift_mask[:, h - shift :, ...] = 0
 
     poc = pred_object_count(shift_mask, mask, dim=1)
     loc = label_object_count(shift_mask, mask, dim=1)

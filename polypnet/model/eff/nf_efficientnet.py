@@ -12,44 +12,51 @@ from efficientnet_pytorch.utils import (
     efficientnet_params,
     Swish,
     MemoryEfficientSwish,
-    calculate_output_image_size
+    calculate_output_image_size,
 )
 
 
 VALID_MODELS = (
-    'efficientnet-b0', 'efficientnet-b1', 'efficientnet-b2', 'efficientnet-b3',
-    'efficientnet-b4', 'efficientnet-b5', 'efficientnet-b6', 'efficientnet-b7',
-    'efficientnet-b8',
-
+    "efficientnet-b0",
+    "efficientnet-b1",
+    "efficientnet-b2",
+    "efficientnet-b3",
+    "efficientnet-b4",
+    "efficientnet-b5",
+    "efficientnet-b6",
+    "efficientnet-b7",
+    "efficientnet-b8",
     # Support the construction of 'efficientnet-l2' without pretrained weights
-    'efficientnet-l2'
+    "efficientnet-l2",
 )
 
 url_map = {
-    'efficientnet-b0': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b0-355c32eb.pth',
-    'efficientnet-b1': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b1-f1951068.pth',
-    'efficientnet-b2': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b2-8bb594d6.pth',
-    'efficientnet-b3': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b3-5fb5a3c3.pth',
-    'efficientnet-b4': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b4-6ed6700e.pth',
-    'efficientnet-b5': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b5-b6417697.pth',
-    'efficientnet-b6': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b6-c76e70fd.pth',
-    'efficientnet-b7': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b7-dcc49843.pth',
+    "efficientnet-b0": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b0-355c32eb.pth",
+    "efficientnet-b1": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b1-f1951068.pth",
+    "efficientnet-b2": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b2-8bb594d6.pth",
+    "efficientnet-b3": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b3-5fb5a3c3.pth",
+    "efficientnet-b4": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b4-6ed6700e.pth",
+    "efficientnet-b5": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b5-b6417697.pth",
+    "efficientnet-b6": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b6-c76e70fd.pth",
+    "efficientnet-b7": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b7-dcc49843.pth",
 }
 
 url_map_advprop = {
-    'efficientnet-b0': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b0-b64d5a18.pth',
-    'efficientnet-b1': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b1-0f3ce85a.pth',
-    'efficientnet-b2': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b2-6e9d97e5.pth',
-    'efficientnet-b3': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b3-cdd7c0f4.pth',
-    'efficientnet-b4': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b4-44fb3a87.pth',
-    'efficientnet-b5': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b5-86493f6b.pth',
-    'efficientnet-b6': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b6-ac80338e.pth',
-    'efficientnet-b7': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b7-4652b6dd.pth',
-    'efficientnet-b8': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b8-22a8fe65.pth',
+    "efficientnet-b0": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b0-b64d5a18.pth",
+    "efficientnet-b1": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b1-0f3ce85a.pth",
+    "efficientnet-b2": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b2-6e9d97e5.pth",
+    "efficientnet-b3": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b3-cdd7c0f4.pth",
+    "efficientnet-b4": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b4-44fb3a87.pth",
+    "efficientnet-b5": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b5-86493f6b.pth",
+    "efficientnet-b6": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b6-ac80338e.pth",
+    "efficientnet-b7": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b7-4652b6dd.pth",
+    "efficientnet-b8": "https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/adv-efficientnet-b8-22a8fe65.pth",
 }
 
 
-def load_pretrained_weights(model, model_name, weights_path=None, load_fc=True, advprop=False):
+def load_pretrained_weights(
+    model, model_name, weights_path=None, load_fc=True, advprop=False
+):
     """Loads pretrained weights from weights path or download using url.
 
     Args:
@@ -73,14 +80,14 @@ def load_pretrained_weights(model, model_name, weights_path=None, load_fc=True, 
         ret = model.load_state_dict(state_dict, strict=False)
         # assert not ret.missing_keys, 'Missing keys when loading pretrained weights: {}'.format(ret.missing_keys)
     else:
-        state_dict.pop('_fc.weight')
-        state_dict.pop('_fc.bias')
+        state_dict.pop("_fc.weight")
+        state_dict.pop("_fc.bias")
         ret = model.load_state_dict(state_dict, strict=False)
         # assert set(ret.missing_keys) == set(
         #     ['_fc.weight', '_fc.bias']), 'Missing keys when loading pretrained weights: {}'.format(ret.missing_keys)
     # assert not ret.unexpected_keys, 'Missing keys when loading pretrained weights: {}'.format(ret.unexpected_keys)
 
-    print('Loaded pretrained weights for {}'.format(model_name))
+    print("Loaded pretrained weights for {}".format(model_name))
 
 
 class NFMBConvBlock(nn.Module):
@@ -100,17 +107,27 @@ class NFMBConvBlock(nn.Module):
     def __init__(self, block_args, global_params, image_size=None):
         super().__init__()
         self._block_args = block_args
-        self._bn_mom = 1 - global_params.batch_norm_momentum # pytorch's difference from tensorflow
+        self._bn_mom = (
+            1 - global_params.batch_norm_momentum
+        )  # pytorch's difference from tensorflow
         self._bn_eps = global_params.batch_norm_epsilon
-        self.has_se = (self._block_args.se_ratio is not None) and (0 < self._block_args.se_ratio <= 1)
-        self.id_skip = block_args.id_skip  # whether to use skip connection and drop connect
+        self.has_se = (self._block_args.se_ratio is not None) and (
+            0 < self._block_args.se_ratio <= 1
+        )
+        self.id_skip = (
+            block_args.id_skip
+        )  # whether to use skip connection and drop connect
 
         # Expansion phase (Inverted Bottleneck)
         inp = self._block_args.input_filters  # number of input channels
-        oup = self._block_args.input_filters * self._block_args.expand_ratio  # number of output channels
+        oup = (
+            self._block_args.input_filters * self._block_args.expand_ratio
+        )  # number of output channels
         if self._block_args.expand_ratio != 1:
             Conv2d = get_same_padding_conv2d(image_size=image_size)
-            self._expand_conv = Conv2d(in_channels=inp, out_channels=oup, kernel_size=1, bias=False)
+            self._expand_conv = Conv2d(
+                in_channels=inp, out_channels=oup, kernel_size=1, bias=False
+            )
             # self._bn0 = nn.BatchNorm2d(num_features=oup, momentum=self._bn_mom, eps=self._bn_eps)
             # image_size = calculate_output_image_size(image_size, 1) <-- this wouldn't modify image_size
 
@@ -119,21 +136,34 @@ class NFMBConvBlock(nn.Module):
         s = self._block_args.stride
         Conv2d = get_same_padding_conv2d(image_size=image_size)
         self._depthwise_conv = Conv2d(
-            in_channels=oup, out_channels=oup, groups=oup,  # groups makes it depthwise
-            kernel_size=k, stride=s, bias=False)
+            in_channels=oup,
+            out_channels=oup,
+            groups=oup,  # groups makes it depthwise
+            kernel_size=k,
+            stride=s,
+            bias=False,
+        )
         image_size = calculate_output_image_size(image_size, s)
 
         # Squeeze and Excitation layer, if desired
         if self.has_se:
             Conv2d = get_same_padding_conv2d(image_size=(1, 1))
-            num_squeezed_channels = max(1, int(self._block_args.input_filters * self._block_args.se_ratio))
-            self._se_reduce = Conv2d(in_channels=oup, out_channels=num_squeezed_channels, kernel_size=1)
-            self._se_expand = Conv2d(in_channels=num_squeezed_channels, out_channels=oup, kernel_size=1)
+            num_squeezed_channels = max(
+                1, int(self._block_args.input_filters * self._block_args.se_ratio)
+            )
+            self._se_reduce = Conv2d(
+                in_channels=oup, out_channels=num_squeezed_channels, kernel_size=1
+            )
+            self._se_expand = Conv2d(
+                in_channels=num_squeezed_channels, out_channels=oup, kernel_size=1
+            )
 
         # Pointwise convolution phase
         final_oup = self._block_args.output_filters
         Conv2d = get_same_padding_conv2d(image_size=image_size)
-        self._project_conv = Conv2d(in_channels=oup, out_channels=final_oup, kernel_size=1, bias=False)
+        self._project_conv = Conv2d(
+            in_channels=oup, out_channels=final_oup, kernel_size=1, bias=False
+        )
         # self._bn2 = nn.BatchNorm2d(num_features=final_oup, momentum=self._bn_mom, eps=self._bn_eps)
         self._swish = MemoryEfficientSwish()
 
@@ -169,8 +199,15 @@ class NFMBConvBlock(nn.Module):
         x = self._project_conv(x)
 
         # Skip connection and drop connect
-        input_filters, output_filters = self._block_args.input_filters, self._block_args.output_filters
-        if self.id_skip and self._block_args.stride == 1 and input_filters == output_filters:
+        input_filters, output_filters = (
+            self._block_args.input_filters,
+            self._block_args.output_filters,
+        )
+        if (
+            self.id_skip
+            and self._block_args.stride == 1
+            and input_filters == output_filters
+        ):
             # The combination of skip connection and drop connect brings about stochastic depth.
             if drop_connect_rate:
                 x = drop_connect(x, p=drop_connect_rate, training=self.training)
@@ -210,8 +247,8 @@ class NFEfficientNet(nn.Module):
 
     def __init__(self, blocks_args=None, global_params=None):
         super().__init__()
-        assert isinstance(blocks_args, list), 'blocks_args should be a list'
-        assert len(blocks_args) > 0, 'block args must be greater than 0'
+        assert isinstance(blocks_args, list), "blocks_args should be a list"
+        assert len(blocks_args) > 0, "block args must be greater than 0"
         self._global_params = global_params
         self._blocks_args = blocks_args
 
@@ -225,8 +262,12 @@ class NFEfficientNet(nn.Module):
 
         # Stem
         in_channels = 3  # rgb
-        out_channels = round_filters(32, self._global_params)  # number of output channels
-        self._conv_stem = Conv2d(in_channels, out_channels, kernel_size=3, stride=2, bias=False)
+        out_channels = round_filters(
+            32, self._global_params
+        )  # number of output channels
+        self._conv_stem = Conv2d(
+            in_channels, out_channels, kernel_size=3, stride=2, bias=False
+        )
         # self._bn0 = nn.BatchNorm2d(num_features=out_channels, momentum=bn_mom, eps=bn_eps)
         image_size = calculate_output_image_size(image_size, 2)
 
@@ -236,18 +277,30 @@ class NFEfficientNet(nn.Module):
 
             # Update block input and output filters based on depth multiplier.
             block_args = block_args._replace(
-                input_filters=round_filters(block_args.input_filters, self._global_params),
-                output_filters=round_filters(block_args.output_filters, self._global_params),
-                num_repeat=round_repeats(block_args.num_repeat, self._global_params)
+                input_filters=round_filters(
+                    block_args.input_filters, self._global_params
+                ),
+                output_filters=round_filters(
+                    block_args.output_filters, self._global_params
+                ),
+                num_repeat=round_repeats(block_args.num_repeat, self._global_params),
             )
 
             # The first block needs to take care of stride and filter size increase.
-            self._blocks.append(NFMBConvBlock(block_args, self._global_params, image_size=image_size))
+            self._blocks.append(
+                NFMBConvBlock(block_args, self._global_params, image_size=image_size)
+            )
             image_size = calculate_output_image_size(image_size, block_args.stride)
-            if block_args.num_repeat > 1: # modify block_args to keep same output size
-                block_args = block_args._replace(input_filters=block_args.output_filters, stride=1)
+            if block_args.num_repeat > 1:  # modify block_args to keep same output size
+                block_args = block_args._replace(
+                    input_filters=block_args.output_filters, stride=1
+                )
             for _ in range(block_args.num_repeat - 1):
-                self._blocks.append(NFMBConvBlock(block_args, self._global_params, image_size=image_size))
+                self._blocks.append(
+                    NFMBConvBlock(
+                        block_args, self._global_params, image_size=image_size
+                    )
+                )
                 # image_size = calculate_output_image_size(image_size, block_args.stride)  # stride = 1
 
         # Head
@@ -305,15 +358,17 @@ class NFEfficientNet(nn.Module):
         for idx, block in enumerate(self._blocks):
             drop_connect_rate = self._global_params.drop_connect_rate
             if drop_connect_rate:
-                drop_connect_rate *= float(idx) / len(self._blocks) # scale drop connect_rate
+                drop_connect_rate *= float(idx) / len(
+                    self._blocks
+                )  # scale drop connect_rate
             x = block(x, drop_connect_rate=drop_connect_rate)
             if prev_x.size(2) > x.size(2):
-                endpoints['reduction_{}'.format(len(endpoints)+1)] = prev_x
+                endpoints["reduction_{}".format(len(endpoints) + 1)] = prev_x
             prev_x = x
 
         # Head
         x = self._swish(self._conv_head(x))
-        endpoints['reduction_{}'.format(len(endpoints)+1)] = x
+        endpoints["reduction_{}".format(len(endpoints) + 1)] = x
 
         return endpoints
 
@@ -334,7 +389,9 @@ class NFEfficientNet(nn.Module):
         for idx, block in enumerate(self._blocks):
             drop_connect_rate = self._global_params.drop_connect_rate
             if drop_connect_rate:
-                drop_connect_rate *= float(idx) / len(self._blocks) # scale drop connect_rate
+                drop_connect_rate *= float(idx) / len(
+                    self._blocks
+                )  # scale drop connect_rate
             x = block(x, drop_connect_rate=drop_connect_rate)
 
         # Head
@@ -388,8 +445,15 @@ class NFEfficientNet(nn.Module):
         return model
 
     @classmethod
-    def from_pretrained(cls, model_name, weights_path=None, advprop=False,
-                        in_channels=3, num_classes=1000, **override_params):
+    def from_pretrained(
+        cls,
+        model_name,
+        weights_path=None,
+        advprop=False,
+        in_channels=3,
+        num_classes=1000,
+        **override_params
+    ):
         """create an efficientnet model according to name.
 
         Args:
@@ -417,7 +481,13 @@ class NFEfficientNet(nn.Module):
             A pretrained efficientnet model.
         """
         model = cls.from_name(model_name, num_classes=num_classes, **override_params)
-        load_pretrained_weights(model, model_name, weights_path=weights_path, load_fc=(num_classes == 1000), advprop=advprop)
+        load_pretrained_weights(
+            model,
+            model_name,
+            weights_path=weights_path,
+            load_fc=(num_classes == 1000),
+            advprop=advprop,
+        )
         model._change_in_channels(in_channels)
         return model
 
@@ -446,7 +516,7 @@ class NFEfficientNet(nn.Module):
             bool: Is a valid name or not.
         """
         if model_name not in VALID_MODELS:
-            raise ValueError('model_name should be one of: ' + ', '.join(VALID_MODELS))
+            raise ValueError("model_name should be one of: " + ", ".join(VALID_MODELS))
 
     def _change_in_channels(self, in_channels):
         """Adjust model's first convolution layer to in_channels, if in_channels not equals 3.
@@ -457,4 +527,6 @@ class NFEfficientNet(nn.Module):
         if in_channels != 3:
             Conv2d = get_same_padding_conv2d(image_size=self._global_params.image_size)
             out_channels = round_filters(32, self._global_params)
-            self._conv_stem = Conv2d(in_channels, out_channels, kernel_size=3, stride=2, bias=False)
+            self._conv_stem = Conv2d(
+                in_channels, out_channels, kernel_size=3, stride=2, bias=False
+            )

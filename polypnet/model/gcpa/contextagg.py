@@ -49,17 +49,14 @@ class LocalAttenModule(nn.Module):
 
 def INF(B, H, W, device="cpu"):
     return (
-        -torch.diag(
-            torch.tensor(float("inf"))
-            .to(device).repeat(H), 0
-        )
+        -torch.diag(torch.tensor(float("inf")).to(device).repeat(H), 0)
         .unsqueeze(0)
         .repeat(B * W, 1, 1)
     )
 
 
 class CrissCrossAttention(pl.LightningModule):
-    """ Criss-Cross Attention Module"""
+    """Criss-Cross Attention Module"""
 
     def __init__(self, in_dim):
         super(CrissCrossAttention, self).__init__()
@@ -114,7 +111,10 @@ class CrissCrossAttention(pl.LightningModule):
             .view(m_batchsize * height, -1, width)
         )
         energy_H = (
-            (torch.bmm(proj_query_H, proj_key_H) + self.INF(m_batchsize, height, width, device=self.device))
+            (
+                torch.bmm(proj_query_H, proj_key_H)
+                + self.INF(m_batchsize, height, width, device=self.device)
+            )
             .view(m_batchsize, width, height, height)
             .permute(0, 2, 1, 3)
         )

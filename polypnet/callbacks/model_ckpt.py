@@ -34,14 +34,14 @@ class MLFlowModelCheckpoint(pl.callbacks.ModelCheckpoint):
             )
             f1 = self.__executor.submit(
                 self.mlflow_logger.experiment.log_artifact,
-                run_id, self.best_model_path,
-                artifact_path=f"best"
+                run_id,
+                self.best_model_path,
+                artifact_path=f"best",
             )
 
         if self.last_model_path != "":
             f2 = self.__executor.submit(
-                self.mlflow_logger.experiment.log_artifact,
-                run_id, self.last_model_path
+                self.mlflow_logger.experiment.log_artifact, run_id, self.last_model_path
             )
 
         if f1 is not None:

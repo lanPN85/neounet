@@ -28,11 +28,13 @@ def iou(pred_mask, true_mask, ignore_mask=None, eps=1e-3):
     acc_mask = 1 - ignore_mask
 
     intersection = torch.sum(pred_mask * true_mask * acc_mask, dim=[2, 3])
-    union = torch.sum(pred_mask * acc_mask, dim=[2, 3]) + torch.sum(true_mask * acc_mask, dim=[2, 3]) - intersection
+    union = (
+        torch.sum(pred_mask * acc_mask, dim=[2, 3])
+        + torch.sum(true_mask * acc_mask, dim=[2, 3])
+        - intersection
+    )
 
-    return torch.mean(
-        (intersection) / (union + eps)
-    ).item()
+    return torch.mean((intersection) / (union + eps)).item()
 
 
 def dice_2(pred_mask, true_mask, ignore_mask=None, eps=1e-3):
@@ -48,14 +50,11 @@ def dice_2(pred_mask, true_mask, ignore_mask=None, eps=1e-3):
     acc_mask = 1 - ignore_mask
 
     intersection = torch.sum(pred_mask * true_mask * acc_mask, dim=[2, 3])
-    union = torch.sum(pred_mask * acc_mask, dim=[2, 3]) + torch.sum(true_mask * acc_mask, dim=[2, 3])
-
-    return torch.mean(
-        torch.mean(
-            (2 * intersection + eps) / (union + eps),
-            dim=1
-        )
+    union = torch.sum(pred_mask * acc_mask, dim=[2, 3]) + torch.sum(
+        true_mask * acc_mask, dim=[2, 3]
     )
+
+    return torch.mean(torch.mean((2 * intersection + eps) / (union + eps), dim=1))
 
 
 def dice(pred_mask, true_mask, ignore_mask=None, eps=1e-3):
@@ -78,16 +77,13 @@ def precision2(pred_mask, true_mask, ignore_mask=None, eps=1e-3):
 
     true_pos = torch.sum(pred_mask * true_mask * acc_mask, dim=[2, 3])
     all_pos = torch.sum((pred_mask == 1) * acc_mask, dim=[2, 3])
-    return torch.mean(
-        torch.mean(
-            (true_pos + eps) / (all_pos + eps),
-            dim=1
-        )
-    )
+    return torch.mean(torch.mean((true_pos + eps) / (all_pos + eps), dim=1))
 
 
 def precision(pred_mask, true_mask, ignore_mask=None, eps=1e-3):
-    return true_positive(pred_mask, true_mask, ignore_mask) / (prod_positive(pred_mask, true_mask, ignore_mask) + eps)
+    return true_positive(pred_mask, true_mask, ignore_mask) / (
+        prod_positive(pred_mask, true_mask, ignore_mask) + eps
+    )
 
 
 def recall2(pred_mask, true_mask, ignore_mask=None, eps=1e-3):
@@ -104,14 +100,13 @@ def recall2(pred_mask, true_mask, ignore_mask=None, eps=1e-3):
 
     true_pos = torch.sum(pred_mask * true_mask * acc_mask, dim=[2, 3])
     all_true = torch.sum((true_mask == 1) * acc_mask, dim=[2, 3])
-    return torch.mean(
-        (true_pos + eps) / (all_true + eps),
-        dim=1
-    )
+    return torch.mean((true_pos + eps) / (all_true + eps), dim=1)
 
 
 def recall(pred_mask, true_mask, ignore_mask=None, eps=1e-3):
-    return true_positive(pred_mask, true_mask, ignore_mask) / (label_positive(pred_mask, true_mask, ignore_mask) + eps)
+    return true_positive(pred_mask, true_mask, ignore_mask) / (
+        label_positive(pred_mask, true_mask, ignore_mask) + eps
+    )
 
 
 def true_positive(pred_mask, true_mask, ignore_mask=None):

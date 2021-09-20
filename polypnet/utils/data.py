@@ -40,6 +40,7 @@ class Threshold(nn.Module):
     """
     Thresholding transform for image
     """
+
     def __init__(self, threshold=128):
         super().__init__()
         self.threshold = threshold

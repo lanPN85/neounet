@@ -19,9 +19,9 @@ def unitwise_norm(x: torch.Tensor):
         dim = [1, 2, 3]
         keepdim = True
     else:
-        raise ValueError('Wrong input dimensions')
+        raise ValueError("Wrong input dimensions")
 
-    return torch.sum(x**2, dim=dim, keepdim=keepdim) ** 0.5
+    return torch.sum(x ** 2, dim=dim, keepdim=keepdim) ** 0.5
 
 
 class AGC(optim.Optimizer):
@@ -36,7 +36,15 @@ class AGC(optim.Optimizer):
       ignore_agc (str, Iterable, optional): Layers for AGC to ignore
     """
 
-    def __init__(self, params, optim_: optim.Optimizer, clipping: float = 0.3, eps: float = 1e-3, model=None, ignore_agc=tuple()):
+    def __init__(
+        self,
+        params,
+        optim_: optim.Optimizer,
+        clipping: float = 0.3,
+        eps: float = 1e-3,
+        model=None,
+        ignore_agc=tuple(),
+    ):
         if clipping < 0.0:
             raise ValueError("Invalid clipping value: {}".format(clipping))
         if eps < 0.0:
@@ -51,15 +59,22 @@ class AGC(optim.Optimizer):
             ignore_agc = [ignore_agc]
 
         if model is not None:
-            assert ignore_agc not in [None, []], "You must specify ignore_agc for AGC to ignore fc-like(or other) layers"
+            assert ignore_agc not in [
+                None,
+                [],
+            ], "You must specify ignore_agc for AGC to ignore fc-like(or other) layers"
             names = [name for name, module in model.named_modules()]
 
             for module_name in ignore_agc:
                 if module_name not in names:
                     raise ModuleNotFoundError(
-                        "Module name {} not found in the model".format(module_name))
-            params = [{"params": list(module.parameters())} for name,
-                          module in model.named_modules() if name not in ignore_agc]
+                        "Module name {} not found in the model".format(module_name)
+                    )
+            params = [
+                {"params": list(module.parameters())}
+                for name, module in model.named_modules()
+                if name not in ignore_agc
+            ]
 
         else:
             params = [{"params": params}]
@@ -83,20 +98,22 @@ class AGC(optim.Optimizer):
                 loss = closure()
 
         for group in self.agc_params:
-            for p in group['params']:
+            for p in group["params"]:
                 if p.grad is None:
                     continue
 
-                param_norm = torch.max(unitwise_norm(
-                    p.detach()), torch.tensor(self.eps).to(p.device))
+                param_norm = torch.max(
+                    unitwise_norm(p.detach()), torch.tensor(self.eps).to(p.device)
+                )
                 grad_norm = unitwise_norm(p.grad.detach())
                 max_norm = param_norm * self.clipping
 
                 trigger = grad_norm > max_norm
 
-                clipped_grad = p.grad * \
-                    (max_norm / torch.max(grad_norm,
-                                          torch.tensor(1e-6).to(grad_norm.device)))
+                clipped_grad = p.grad * (
+                    max_norm
+                    / torch.max(grad_norm, torch.tensor(1e-6).to(grad_norm.device))
+                )
                 p.grad.detach().data.copy_(torch.where(trigger, clipped_grad, p.grad))
 
         return self.optim.step(closure)
@@ -116,7 +133,7 @@ class AGC(optim.Optimizer):
                 the step altogether).
         """
         for group in self.agc_params:
-            for p in group['params']:
+            for p in group["params"]:
                 if p.grad is not None:
                     if set_to_none:
                         p.grad = None

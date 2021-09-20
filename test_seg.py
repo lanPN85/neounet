@@ -13,9 +13,12 @@ from tqdm import tqdm
 from yaml import load
 
 from polypnet.model import UnetModelWrapper
-from polypnet.config import load_config, print_config,\
-    load_class_from_conf
-from polypnet.callbacks import MLFlowModelCheckpoint, ResultSampleCallback, save_infer_image_3tile
+from polypnet.config import load_config, print_config, load_class_from_conf
+from polypnet.callbacks import (
+    MLFlowModelCheckpoint,
+    ResultSampleCallback,
+    save_infer_image_3tile,
+)
 from polypnet.data import mask_collate_fn, Augmenter, NoOpAugmenter
 
 
@@ -33,9 +36,7 @@ def main():
     config_paths = ["config/defaults.yml"]
     for cf in args.config:
         config_paths.append(cf)
-    config = load_config(
-        config_paths
-    )
+    config = load_config(config_paths)
 
     print_config(config)
 
@@ -44,26 +45,27 @@ def main():
     optimizer = load_class_from_conf(config.optimizer, model.parameters())
     scheduler = load_class_from_conf(config.scheduler, optimizer=optimizer)
     model_wrapper = UnetModelWrapper.load_from_checkpoint(
-        args.model, model=model, optimizer=optimizer,
+        args.model,
+        model=model,
+        optimizer=optimizer,
         lr_scheduler=scheduler,
         test_names=[args.d],
-        **config.wrapper.kwargs
+        **config.wrapper.kwargs,
     )
     model_wrapper.eval()
 
     logger.info("Loading test dataset")
 
     try:
-        test_dataset_conf = next(filter(
-            lambda x: x.name == args.d, config.test_datasets
-        ))
+        test_dataset_conf = next(
+            filter(lambda x: x.name == args.d, config.test_datasets)
+        )
     except StopIteration:
         logger.error(f"No dataset with name '{args.d}' found in config")
         exit(1)
 
     test_dataset = load_class_from_conf(
-        test_dataset_conf, augmenter=NoOpAugmenter(),
-        return_paths=True, shape=None
+        test_dataset_conf, augmenter=NoOpAugmenter(), return_paths=True, shape=None
     )
 
     # Create result directories
@@ -76,9 +78,11 @@ def main():
             name = image_path.split("/")[-1]
             name = name.split(".")[0]
             save_infer_image_3tile(
-                model_wrapper, mask_collate_fn,
-                image_t, mask_t,
-                save_path=os.path.join(args.save_dir, f"{name}.tiles.jpg")
+                model_wrapper,
+                mask_collate_fn,
+                image_t,
+                mask_t,
+                save_path=os.path.join(args.save_dir, f"{name}.tiles.jpg"),
             )
 
     if not args.skip_metrics:
@@ -89,18 +93,15 @@ def main():
             pin_memory=True,
             collate_fn=mask_collate_fn,
             batch_size=1,
-            **config.test_loader
+            **config.test_loader,
         )
         trainer = pl.Trainer(
-            default_root_dir="results",
-            terminate_on_nan=True,
-            **config.trainer
+            default_root_dir="results", terminate_on_nan=True, **config.trainer
         )
         trainer.test(
-            model=model_wrapper,
-            test_dataloaders=[test_dataloader],
-            ckpt_path=None
+            model=model_wrapper, test_dataloaders=[test_dataloader], ckpt_path=None
         )
+
 
 if __name__ == "__main__":
     main()

@@ -8,20 +8,9 @@ class AdditiveAttnGate(pl.LightningModule):
     def __init__(self, x_channels: int, g_channels: int):
         super().__init__()
 
-        self.conv_g = nn.Conv2d(
-            g_channels, 1, kernel_size=1,
-            groups=1,
-            bias=True
-        )
-        self.conv_x = nn.Conv2d(
-            x_channels, 1, kernel_size=1,
-            groups=1,
-            bias=False
-        )
-        self.conv_group = nn.Conv2d(
-            1, 1, kernel_size=1,
-            groups=1, bias=True
-        )
+        self.conv_g = nn.Conv2d(g_channels, 1, kernel_size=1, groups=1, bias=True)
+        self.conv_x = nn.Conv2d(x_channels, 1, kernel_size=1, groups=1, bias=False)
+        self.conv_group = nn.Conv2d(1, 1, kernel_size=1, groups=1, bias=True)
 
     def forward(self, x, g):
         """
@@ -54,6 +43,7 @@ def test_1():
     g = torch.randn((4, 32, 100, 100))
     out = attn(x, g)
     print(out.shape)
+
 
 if __name__ == "__main__":
     test_1()

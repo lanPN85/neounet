@@ -26,7 +26,9 @@ class DiceLoss(nn.Module):
         probs = torch.sigmoid(pred)
 
         num = 2 * torch.sum(probs * label, dim=[0, 2, 3]) + self.eps
-        den = torch.sum(probs, dim=[0, 2, 3]) + torch.sum(label, dim=[0, 2, 3]) + self.eps
+        den = (
+            torch.sum(probs, dim=[0, 2, 3]) + torch.sum(label, dim=[0, 2, 3]) + self.eps
+        )
 
         return 1 - torch.mean(num / den)
 
@@ -48,7 +50,11 @@ class InverseWDiceLoss(nn.Module):
         w = get_inverse_weight_matrix(label)
 
         num = 2 * torch.sum(w * probs * label, dim=[0, 2, 3]) + self.eps
-        den = torch.sum(w * probs, dim=[0, 2, 3]) + torch.sum(w * label, dim=[0, 2, 3]) + self.eps
+        den = (
+            torch.sum(w * probs, dim=[0, 2, 3])
+            + torch.sum(w * label, dim=[0, 2, 3])
+            + self.eps
+        )
 
         return 1 - torch.mean(num / den)
 
@@ -72,12 +78,18 @@ class TverskyLoss(nn.Module):
         false_neg = torch.sum(label * (1 - probs), dim=[0, 2, 3])
         false_pos = torch.sum(probs * (1 - label), dim=[0, 2, 3])
         return 1 - torch.mean(
-            (true_pos + self.eps) / (true_pos + self.alpha * false_neg + (1 - self.alpha) * false_pos + self.eps)
+            (true_pos + self.eps)
+            / (
+                true_pos
+                + self.alpha * false_neg
+                + (1 - self.alpha) * false_pos
+                + self.eps
+            )
         )
 
 
 class FocalTverskyLoss(TverskyLoss):
-    def __init__(self, gamma=4/3, **kwargs):
+    def __init__(self, gamma=4 / 3, **kwargs):
         super().__init__(**kwargs)
         self.gamma = gamma
 
@@ -87,11 +99,11 @@ class FocalTverskyLoss(TverskyLoss):
         false_neg = torch.sum(label * (1 - probs), dim=[0, 2, 3])
         false_pos = torch.sum(probs * (1 - label), dim=[0, 2, 3])
 
-        t = (true_pos + self.eps) / (true_pos + self.alpha * false_neg + (1 - self.alpha) * false_pos + self.eps)
-
-        x = torch.pow(
-            1 - t, 1 / self.gamma
+        t = (true_pos + self.eps) / (
+            true_pos + self.alpha * false_neg + (1 - self.alpha) * false_pos + self.eps
         )
+
+        x = torch.pow(1 - t, 1 / self.gamma)
 
         return torch.sum(x)
 
@@ -117,7 +129,13 @@ class InverseWTverskyLoss(nn.Module):
         false_neg = torch.sum(w * label * (1 - probs), dim=[0, 2, 3])
         false_pos = torch.sum(w * probs * (1 - label), dim=[0, 2, 3])
         return 1 - torch.mean(
-            (true_pos + self.eps) / (true_pos + self.alpha * false_neg + (1 - self.alpha) * false_pos + self.eps)
+            (true_pos + self.eps)
+            / (
+                true_pos
+                + self.alpha * false_neg
+                + (1 - self.alpha) * false_pos
+                + self.eps
+            )
         )
 
 
@@ -149,7 +167,7 @@ class BoundaryWeightedLoss(nn.Module):
         is_fn = (mask != onehot_label) * (mask == 0)
         alpha = alpha + is_fp * fp_alpha + is_fn * fn_alpha
 
-        ce = F.binary_cross_entropy(probs, label.float(), reduction='none')
+        ce = F.binary_cross_entropy(probs, label.float(), reduction="none")
         loss = torch.sum(alpha * ce) / F_
         return loss
 
@@ -179,6 +197,7 @@ def test_2():
     b = (torch.randn((5, 1, 112, 112)) > 0.5).long()
     l = BoundaryWeightedLoss()(a, b)
     print(l)
+
 
 if __name__ == "__main__":
     test_2()

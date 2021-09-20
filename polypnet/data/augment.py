@@ -11,7 +11,8 @@ from torchvision.utils import make_grid
 
 
 class Augmenter(nn.Module):
-    def __init__(self,
+    def __init__(
+        self,
         prob=0.7,
         blur_prob=0.7,
         jitter_prob=0.7,
@@ -26,13 +27,17 @@ class Augmenter(nn.Module):
         self.rotate_prob = rotate_prob
         self.flip_prob = flip_prob
 
-        self.transforms = al.Compose([
-            al.MotionBlur(p=self.blur_prob),
-            al.Rotate(p=self.rotate_prob),
-            al.ColorJitter(p=self.jitter_prob),
-            al.VerticalFlip(p=self.flip_prob),
-            al.HorizontalFlip(p=self.flip_prob)
-        ], p=self.prob, **self._transform_kwargs())
+        self.transforms = al.Compose(
+            [
+                al.MotionBlur(p=self.blur_prob),
+                al.Rotate(p=self.rotate_prob),
+                al.ColorJitter(p=self.jitter_prob),
+                al.VerticalFlip(p=self.flip_prob),
+                al.HorizontalFlip(p=self.flip_prob),
+            ],
+            p=self.prob,
+            **self._transform_kwargs()
+        )
 
     def _transform_kwargs(self) -> dict:
         return {}
@@ -52,11 +57,7 @@ class Augmenter(nn.Module):
 
 class TripletAugmenter(Augmenter):
     def _transform_kwargs(self) -> dict:
-        return {
-            "additional_targets": {
-                "cls": "mask"
-            }
-        }
+        return {"additional_targets": {"cls": "mask"}}
 
     def forward(self, image_t, mask_t, cls_t):
         # Switch to channel-last
@@ -64,11 +65,7 @@ class TripletAugmenter(Augmenter):
         mask_n = mask_t.numpy().transpose(1, 2, 0)
         cls_n = cls_t.numpy().transpose(1, 2, 0)
 
-        result = self.transforms(
-            image=image_n,
-            mask=mask_n,
-            cls=cls_n
-        )
+        result = self.transforms(image=image_n, mask=mask_n, cls=cls_n)
 
         image_n, mask_n, cls_n = result["image"], result["mask"], result["cls"]
 
@@ -81,9 +78,7 @@ class TripletAugmenter(Augmenter):
 
 class NoOpAugmenter(Augmenter):
     def __init__(self):
-        super().__init__(
-            prob=0
-        )
+        super().__init__(prob=0)
 
     def forward(self, image_t, mask_t):
         return image_t, mask_t

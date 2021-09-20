@@ -21,16 +21,15 @@ EFF_DEPTH_MAP = {
 
 
 class EfficientNetUnet(pl.LightningModule):
-    def __init__(self,
-        backbone_name="efficientnet-b0",
-        num_classes=1
-    ):
+    def __init__(self, backbone_name="efficientnet-b0", num_classes=1):
         super().__init__()
 
         self.num_classes = num_classes
         self.backbone_name = backbone_name
 
-        self.d5, self.d4, self.d3, self.d2, self.d1, self.d0 = self._block_depths(backbone_name)
+        self.d5, self.d4, self.d3, self.d2, self.d1, self.d0 = self._block_depths(
+            backbone_name
+        )
 
         self._init_encoder()
 
@@ -43,7 +42,7 @@ class EfficientNetUnet(pl.LightningModule):
         self.decode_0 = nn.Sequential(
             nn.Conv2d(self.d0, self.d0 // 2, kernel_size=3, padding=1),
             nn.BatchNorm2d(self.d0 // 2),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
         )
 
         self.out_4 = self._out_block(self.d4)
@@ -67,7 +66,14 @@ class EfficientNetUnet(pl.LightningModule):
         self.encoder = EfficientNet.from_pretrained(self.backbone_name)
 
     def _init_upsamplers(self):
-        self.mid_upsampler = nn.ConvTranspose2d(in_channels=self.d5, out_channels=self.d4, kernel_size=4, stride=2, padding=1, bias=False)
+        self.mid_upsampler = nn.ConvTranspose2d(
+            in_channels=self.d5,
+            out_channels=self.d4,
+            kernel_size=4,
+            stride=2,
+            padding=1,
+            bias=False,
+        )
         self.ups_4 = self._upsampler_block(in_channels=self.d4, out_channels=self.d3)
         self.ups_3 = self._upsampler_block(in_channels=self.d3, out_channels=self.d2)
         self.ups_2 = self._upsampler_block(in_channels=self.d2, out_channels=self.d1)
@@ -94,12 +100,14 @@ class EfficientNetUnet(pl.LightningModule):
             nn.LeakyReLU(),
             nn.Conv2d(out_channels // 2, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
         )
 
     def _upsampler_block(self, in_channels, out_channels):
-        return nn.ConvTranspose2d(in_channels, out_channels, kernel_size=4, stride=2, padding=1, bias=False)
+        return nn.ConvTranspose2d(
+            in_channels, out_channels, kernel_size=4, stride=2, padding=1, bias=False
+        )
 
     @property
     def output_scales(self):
-        return 1., 1/2, 1/4, 1/8, 1/16
+        return 1.0, 1 / 2, 1 / 4, 1 / 8, 1 / 16

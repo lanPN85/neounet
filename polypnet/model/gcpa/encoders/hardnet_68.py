@@ -278,7 +278,7 @@ def hardnet(arch=68, pretrained=True, device="cpu", **kwargs):
             # model_dir = os.path.join(os.path.expanduser("~"), ".cache/torch/hub/checkpoints")
             state_dict = load_state_dict_from_url(
                 "https://github.com/PingoLH/Pytorch-HarDNet/raw/master/hardnet68.pth",
-                map_location=device
+                map_location=device,
             )
             model.load_state_dict(state_dict)
     return model

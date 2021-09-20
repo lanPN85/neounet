@@ -13,14 +13,8 @@ from .base import EfficientNetUnet
 
 
 class NFEfficientNetUnet(EfficientNetUnet):
-    def __init__(self,
-        backbone_name="efficientnet-b0",
-        num_classes=1
-    ):
-        super().__init__(
-            backbone_name=backbone_name,
-            num_classes=num_classes
-        )
+    def __init__(self, backbone_name="efficientnet-b0", num_classes=1):
+        super().__init__(backbone_name=backbone_name, num_classes=num_classes)
 
     def _init_encoder(self):
         self.encoder = NFEfficientNet.from_pretrained(self.backbone_name)
@@ -30,7 +24,7 @@ class NFEfficientNetUnet(EfficientNetUnet):
             nn.Conv2d(in_channels, out_channels // 2, kernel_size=3, padding=1),
             nn.LeakyReLU(),
             nn.Conv2d(out_channels // 2, out_channels, kernel_size=3, padding=1),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
         )
 
     def forward(self, inputs):
@@ -49,7 +43,7 @@ class NFEfficientNetUnet(EfficientNetUnet):
         encode_1 = endpoints["reduction_1"]  # B x 16 x H2 x W2
 
         # Upsample middle block
-        middle_block = endpoints["reduction_5"]   # B x 1280 x H32 x W32
+        middle_block = endpoints["reduction_5"]  # B x 1280 x H32 x W32
         attn_middle = self.attn_mid(middle_block, encode_4)  # B x 1280 x H32 x W32
         up_middle = self.mid_upsampler(attn_middle)  # B x 112 x H16 x W16
 
@@ -65,20 +59,20 @@ class NFEfficientNetUnet(EfficientNetUnet):
         decode_3 = self.decode_3(merged_3)  # B x 40 x H8 x W8
         attn_3 = self.attn_3(decode_3, encode_2)  # B x 40 x H8 x W8
         out_3 = self.out_3(decode_3)  # B x 2 x H8 x W8
-        up_3 = self.ups_3(attn_3) # B x 24 x H4 x W4
+        up_3 = self.ups_3(attn_3)  # B x 24 x H4 x W4
 
         # Level 2
         merged_2 = torch.cat((encode_2, up_3), dim=1)  # B x 48 x H4 x W4
         decode_2 = self.decode_2(merged_2)  # B x 24 x H4 x W4
         attn_2 = self.attn_2(decode_2, encode_1)  # B x 24 x H4 x W4
         out_2 = self.out_2(decode_2)  # B x 2 x H4 x W4
-        up_2 = self.ups_2(attn_2) # B x 16 x H2 x W2
+        up_2 = self.ups_2(attn_2)  # B x 16 x H2 x W2
 
         # Level 1
         merged_1 = torch.cat((encode_1, up_2), dim=1)  # B x 32 x H2 x W2
         decode_1 = self.decode_1(merged_1)  # B x 16 x H2 x W2
         out_1 = self.out_1(decode_1)  # B x 2 x H2 x W2
-        up_1 = self.ups_1(decode_1) # B x 8 x H x W
+        up_1 = self.ups_1(decode_1)  # B x 8 x H x W
 
         # Level 0
         out_0 = self.out_0(up_1)  # B x C x H x W

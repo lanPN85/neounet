@@ -13,17 +13,17 @@ class LocalAttenModule(nn.Module):
         self.dconv1 = nn.Sequential(
             nn.Conv2d(inplane, inplane, kernel_size=3, groups=inplane, stride=2),
             BatchNorm2d(inplane),
-            nn.ReLU(inplace=False)
+            nn.ReLU(inplace=False),
         )
         self.dconv2 = nn.Sequential(
             nn.Conv2d(inplane, inplane, kernel_size=3, groups=inplane, stride=2),
             BatchNorm2d(inplane),
-            nn.ReLU(inplace=False)
+            nn.ReLU(inplace=False),
         )
         self.dconv3 = nn.Sequential(
             nn.Conv2d(inplane, inplane, kernel_size=3, groups=inplane, stride=2),
             BatchNorm2d(inplane),
-            nn.ReLU(inplace=False)
+            nn.ReLU(inplace=False),
         )
         self.sigmoid_spatial = nn.Sigmoid()
 
@@ -43,8 +43,8 @@ class LocalAttenModule(nn.Module):
 
 
 class SpatialCGNL(nn.Module):
-    """Spatial CGNL block with dot production kernel for image classfication.
-    """
+    """Spatial CGNL block with dot production kernel for image classfication."""
+
     def __init__(self, inplanes, planes, use_scale=False, groups=8):
         self.use_scale = use_scale
         self.groups = groups
@@ -57,16 +57,18 @@ class SpatialCGNL(nn.Module):
         # conv g
         self.g = nn.Conv2d(inplanes, planes, kernel_size=1, stride=1, bias=False)
         # conv z
-        self.z = nn.Conv2d(planes, inplanes, kernel_size=1, stride=1,
-                                                  groups=self.groups, bias=False)
+        self.z = nn.Conv2d(
+            planes, inplanes, kernel_size=1, stride=1, groups=self.groups, bias=False
+        )
         self.gn = nn.GroupNorm(num_groups=self.groups, num_channels=inplanes)
 
         if self.use_scale:
-            print("=> WARN: SpatialCGNL block uses 'SCALE'", \
-                   'yellow')
+            print("=> WARN: SpatialCGNL block uses 'SCALE'", "yellow")
         if self.groups:
-            print("=> WARN: SpatialCGNL block uses '{}' groups".format(self.groups), \
-                   'yellow')
+            print(
+                "=> WARN: SpatialCGNL block uses '{}' groups".format(self.groups),
+                "yellow",
+            )
 
     def kernel(self, t, p, g, b, c, h, w):
         """The linear kernel (dot production).
@@ -86,7 +88,7 @@ class SpatialCGNL(nn.Module):
         att = torch.bmm(p, g)
 
         if self.use_scale:
-            att = att.div((c*h*w)**0.5)
+            att = att.div((c * h * w) ** 0.5)
 
         x = torch.bmm(att, t)
         x = x.view(b, c, h, w)
@@ -111,14 +113,12 @@ class SpatialCGNL(nn.Module):
             _t_sequences = []
 
             for i in range(self.groups):
-                _x = self.kernel(ts[i], ps[i], gs[i],
-                                 b, _c, h, w)
+                _x = self.kernel(ts[i], ps[i], gs[i], b, _c, h, w)
                 _t_sequences.append(_x)
 
             x = torch.cat(_t_sequences, dim=1)
         else:
-            x = self.kernel(t, p, g,
-                            b, c, h, w)
+            x = self.kernel(t, p, g, b, c, h, w)
 
         x = self.z(x)
         x = self.gn(x) + residual
@@ -127,8 +127,8 @@ class SpatialCGNL(nn.Module):
 
 
 class SpatialCGNLx(nn.Module):
-    """Spatial CGNL block with Gaussian RBF kernel for image classification.
-    """
+    """Spatial CGNL block with Gaussian RBF kernel for image classification."""
+
     def __init__(self, inplanes, planes, use_scale=False, groups=8, order=2):
 
         self.use_scale = use_scale
@@ -143,19 +143,25 @@ class SpatialCGNLx(nn.Module):
         # conv g
         self.g = nn.Conv2d(inplanes, planes, kernel_size=1, stride=1, bias=False)
         # conv z
-        self.z = nn.Conv2d(planes, inplanes, kernel_size=1, stride=1,
-                                                  groups=self.groups, bias=False)
+        self.z = nn.Conv2d(
+            planes, inplanes, kernel_size=1, stride=1, groups=self.groups, bias=False
+        )
         self.gn = nn.GroupNorm(num_groups=self.groups, num_channels=inplanes)
 
         if self.use_scale:
-            print("=> WARN: SpatialCGNLx block uses 'SCALE'", \
-                   'yellow')
+            print("=> WARN: SpatialCGNLx block uses 'SCALE'", "yellow")
         if self.groups:
-            print("=> WARN: SpatialCGNLx block uses '{}' groups".format(self.groups), \
-                   'yellow')
+            print(
+                "=> WARN: SpatialCGNLx block uses '{}' groups".format(self.groups),
+                "yellow",
+            )
 
-        print('=> WARN: The Taylor expansion order in SpatialCGNLx block is {}'.format(self.order), \
-               'yellow')
+        print(
+            "=> WARN: The Taylor expansion order in SpatialCGNLx block is {}".format(
+                self.order
+            ),
+            "yellow",
+        )
 
     def kernel(self, t, p, g, b, c, h, w):
         """The non-linear kernel (Gaussian RBF).
@@ -191,18 +197,13 @@ class SpatialCGNLx(nn.Module):
 
         t_taylor = []
         p_taylor = []
-        for order in range(self.order+1):
+        for order in range(self.order + 1):
             # alpha
             alpha = torch.mul(
-                    torch.div(
-                    torch.pow(
-                        (2 * gamma),
-                        order),
-                        math.factorial(order)),
-                        beta)
+                torch.div(torch.pow((2 * gamma), order), math.factorial(order)), beta
+            )
 
-            alpha = torch.sqrt(
-                        alpha.cuda())
+            alpha = torch.sqrt(alpha.cuda())
 
             _t = t.pow(order).mul(alpha)
             _p = p.pow(order).mul(alpha)
@@ -216,9 +217,9 @@ class SpatialCGNLx(nn.Module):
         att = torch.bmm(p_taylor, g)
 
         if self.use_scale:
-            att = att.div((c*h*w)**0.5)
+            att = att.div((c * h * w) ** 0.5)
 
-        att = att.view(b, 1, int(self.order+1))
+        att = att.view(b, 1, int(self.order + 1))
         x = torch.bmm(att, t_taylor)
         x = x.view(b, c, h, w)
 
@@ -242,14 +243,12 @@ class SpatialCGNLx(nn.Module):
 
             _t_sequences = []
             for i in range(self.groups):
-                _x = self.kernel(ts[i], ps[i], gs[i],
-                                 b, _c, h, w)
+                _x = self.kernel(ts[i], ps[i], gs[i], b, _c, h, w)
                 _t_sequences.append(_x)
 
             x = torch.cat(_t_sequences, dim=1)
         else:
-            x = self.kernel(t, p, g,
-                            b, c, h, w)
+            x = self.kernel(t, p, g, b, c, h, w)
 
         x = self.z(x)
         x = self.gn(x) + residual
@@ -259,8 +258,9 @@ class SpatialCGNLx(nn.Module):
 
 class SpatialNL(nn.Module):
     """Spatial NL block for image classification.
-       [https://github.com/facebookresearch/video-nonlocal-net].
+    [https://github.com/facebookresearch/video-nonlocal-net].
     """
+
     def __init__(self, inplanes, planes, use_scale=False):
         self.use_scale = use_scale
 
@@ -273,7 +273,7 @@ class SpatialNL(nn.Module):
         self.bn = nn.BatchNorm2d(inplanes)
 
         if self.use_scale:
-            print("=> WARN: SpatialNL block uses 'SCALE' before softmax", 'yellow')
+            print("=> WARN: SpatialNL block uses 'SCALE' before softmax", "yellow")
 
     def forward(self, x):
         residual = x
@@ -291,7 +291,7 @@ class SpatialNL(nn.Module):
         att = torch.bmm(t, p)
 
         if self.use_scale:
-            att = att.div(c**0.5)
+            att = att.div(c ** 0.5)
 
         att = self.softmax(att)
         x = torch.bmm(att, g)
@@ -315,7 +315,7 @@ class GALDBlock(nn.Module):
         self.down = nn.Sequential(
             nn.Conv2d(inplane, inplane, kernel_size=3, groups=inplane, stride=2),
             BatchNorm2d(inplane),
-            nn.ReLU(inplace=False)
+            nn.ReLU(inplace=False),
         )
         self.long_relation = SpatialCGNL(inplane, plane)
         self.local_attention = LocalAttenModule(inplane)
@@ -323,30 +323,41 @@ class GALDBlock(nn.Module):
     def forward(self, x):
         size = x.size()[2:]
         x = self.down(x)
-        x = self.long_relation(x) # bs, 512, 10, 10
+        x = self.long_relation(x)  # bs, 512, 10, 10
         # local attention
-        x = F.interpolate(x,size=size, mode="bilinear", align_corners=True)
+        x = F.interpolate(x, size=size, mode="bilinear", align_corners=True)
         res = x
-        x = self.local_attention(x) # bs, 512, 22, 22
+        x = self.local_attention(x)  # bs, 512, 22, 22
         return x + res
 
 
 class GALDHead(nn.Module):
     def __init__(self, inplanes, interplanes, num_classes):
         super(GALDHead, self).__init__()
-        self.conva = nn.Sequential(nn.Conv2d(inplanes, interplanes, 3, padding=1, bias=False),
-                                   BatchNorm2d(interplanes),
-                                   nn.ReLU(interplanes))
-        self.a2block = GALDBlock(interplanes, interplanes//2)
-        self.convb = nn.Sequential(nn.Conv2d(interplanes, interplanes, 3, padding=1, bias=False),
-                                   BatchNorm2d(interplanes),
-                                   nn.ReLU(interplanes))
-
-        self.bottleneck = nn.Sequential(
-            nn.Conv2d(inplanes + interplanes, interplanes, kernel_size=3, padding=1, dilation=1, bias=False),
+        self.conva = nn.Sequential(
+            nn.Conv2d(inplanes, interplanes, 3, padding=1, bias=False),
             BatchNorm2d(interplanes),
             nn.ReLU(interplanes),
-            nn.Conv2d(512, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
+        )
+        self.a2block = GALDBlock(interplanes, interplanes // 2)
+        self.convb = nn.Sequential(
+            nn.Conv2d(interplanes, interplanes, 3, padding=1, bias=False),
+            BatchNorm2d(interplanes),
+            nn.ReLU(interplanes),
+        )
+
+        self.bottleneck = nn.Sequential(
+            nn.Conv2d(
+                inplanes + interplanes,
+                interplanes,
+                kernel_size=3,
+                padding=1,
+                dilation=1,
+                bias=False,
+            ),
+            BatchNorm2d(interplanes),
+            nn.ReLU(interplanes),
+            nn.Conv2d(512, num_classes, kernel_size=1, stride=1, padding=0, bias=True),
         )
 
     def forward(self, x):

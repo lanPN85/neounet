@@ -12,12 +12,15 @@ from torch.utils.data import Dataset, ConcatDataset
 
 from polypnet.data.base import PolypDataset
 
+
 class CvcDataset(PolypDataset):
-    def __init__(self, root_dir: str,
+    def __init__(
+        self,
+        root_dir: str,
         shape=(352, 352),
         image_dir="original",
         mask_dir="segmentation",
-        **kwargs
+        **kwargs,
     ):
         super().__init__(shape=shape, **kwargs)
 
@@ -32,29 +35,26 @@ class CvcDataset(PolypDataset):
         self.__pairs = []
 
         for image_name in os.listdir(self.image_dir):
-            ext = image_name.split('.')[-1]
+            ext = image_name.split(".")[-1]
             image_path = os.path.join(self.image_dir, image_name)
             mask_path = os.path.join(self.mask_dir, image_name)
 
-            if ext not in ('jpg', 'png'):
-                logger.warning(f'Skipping file {image_path}')
+            if ext not in ("jpg", "png"):
+                logger.warning(f"Skipping file {image_path}")
                 continue
 
             if not os.path.exists(mask_path):
-                logger.warning(f'No mask found for {image_path}')
+                logger.warning(f"No mask found for {image_path}")
                 continue
 
-            self.__pairs.append({
-                'image': image_path,
-                'mask': mask_path
-            })
+            self.__pairs.append({"image": image_path, "mask": mask_path})
 
     def __len__(self) -> int:
         return len(self.__pairs)
 
     def _get_image_pair(self, index) -> Tuple[Any, Any]:
         pair = self.__pairs[index]
-        image_path, mask_path = pair['image'], pair['mask']
+        image_path, mask_path = pair["image"], pair["mask"]
 
         # Read images
         image_t = read_image(image_path)
@@ -68,7 +68,7 @@ class CvcDataset(PolypDataset):
 
     def _get_path_pair(self, index) -> Tuple[str, str]:
         pair = self.__pairs[index]
-        return pair['image'], pair['mask']
+        return pair["image"], pair["mask"]
 
     @property
     def image_dir(self) -> str:
@@ -85,7 +85,4 @@ class CvcDataset(PolypDataset):
 
 class CvcMultiDataset(ConcatDataset):
     def __init__(self, root_dirs: List[str], **kwargs):
-        super().__init__([
-            CvcDataset(root_dir, **kwargs)
-            for root_dir in root_dirs
-        ])
+        super().__init__([CvcDataset(root_dir, **kwargs) for root_dir in root_dirs])

@@ -28,10 +28,7 @@ def load_class_from_conf(config, *args, **kwargs):
     if clazz is None:
         raise ValueError(f"Cannot find class {config.cls}")
 
-    return clazz(
-        *args, **kwargs,
-        **OmegaConf.to_container(config.kwargs)
-    )
+    return clazz(*args, **kwargs, **OmegaConf.to_container(config.kwargs))
 
 
 def read_mlflow_auth(path="auth/mlflow.yml"):
@@ -51,9 +48,9 @@ def read_mlflow_auth(path="auth/mlflow.yml"):
     if "s3_endpoint" in d.keys():
         os.environ["MLFLOW_S3_ENDPOINT_URL"] = d["s3_endpoint"]
     if "aws_key" in d.keys():
-        os.environ["AWS_ACCESS_KEY_ID"] = d['aws_key']
+        os.environ["AWS_ACCESS_KEY_ID"] = d["aws_key"]
     if "aws_secret" in d.keys():
-        os.environ["AWS_SECRET_ACCESS_KEY"] = d['aws_secret']
+        os.environ["AWS_SECRET_ACCESS_KEY"] = d["aws_secret"]
 
     if "user" in d.keys() and "password" in d.keys() and "url" in d.keys():
         return f"{d.get('protocol', 'https')}://{d['user']}:{d['password']}@{d['url']}"

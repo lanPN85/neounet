@@ -9,13 +9,19 @@ from loguru import logger
 from typing import Any, List, Optional, Callable, Tuple, Union, Dict, IO
 
 from polypnet.utils import generate_scales, probs_to_onehot
-from polypnet.losses import MultiscaleLoss, CompoundLoss,\
-    DiceLoss, TverskyLoss, BinaryCrossEntropyLoss
+from polypnet.losses import (
+    MultiscaleLoss,
+    CompoundLoss,
+    DiceLoss,
+    TverskyLoss,
+    BinaryCrossEntropyLoss,
+)
 from polypnet import metrics
 
 
 class UnetClassifyModelWrapper(pl.LightningModule):
-    def __init__(self,
+    def __init__(
+        self,
         model: nn.Module,
         optimizer: nn.Module,
         lr_scheduler: nn.Module,
@@ -27,7 +33,7 @@ class UnetClassifyModelWrapper(pl.LightningModule):
         iou_thres=0.7,
         test_input_size=None,
         train_sizes: Optional[List[Tuple[int, int]]] = None,
-        test_names=None
+        test_names=None,
     ):
         super().__init__()
 
@@ -39,18 +45,12 @@ class UnetClassifyModelWrapper(pl.LightningModule):
 
         if seg_loss_fn is None:
             seg_loss_fn = MultiscaleLoss(
-                CompoundLoss([
-                    TverskyLoss(),
-                    BinaryCrossEntropyLoss()
-                ])
+                CompoundLoss([TverskyLoss(), BinaryCrossEntropyLoss()])
             )
 
         if cls_loss_fn is None:
             cls_loss_fn = MultiscaleLoss(
-                CompoundLoss([
-                    TverskyLoss(),
-                    BinaryCrossEntropyLoss()
-                ])
+                CompoundLoss([TverskyLoss(), BinaryCrossEntropyLoss()])
             )
 
         self.optimizer = optimizer
@@ -71,10 +71,7 @@ class UnetClassifyModelWrapper(pl.LightningModule):
         self.test_name = test_name
 
     def configure_optimizers(self):
-        return (
-            [self.optimizer],
-            [self.lr_scheduler]
-        )
+        return ([self.optimizer], [self.lr_scheduler])
 
     def forward(self, input):
         return self.model(input)
@@ -101,16 +98,15 @@ class UnetClassifyModelWrapper(pl.LightningModule):
 
             cls_trunc_label = cls_label[:, :-1, ...]
             cls_ignore_mask = cls_label[:, -1, ...]
-            cls_ignore_mask = torch.stack([cls_ignore_mask] * (cls_label.shape[1] - 1), dim=1)
+            cls_ignore_mask = torch.stack(
+                [cls_ignore_mask] * (cls_label.shape[1] - 1), dim=1
+            )
 
             scaled_seg = generate_scales(seg_label, self.model.output_scales)
             scaled_cls = generate_scales(cls_label, self.model.output_scales)
 
             outputs = self(input)  # [B x C x H x W]
-            seg_outputs = [
-                self.infer_seg_output(o)
-                for o in outputs
-            ]
+            seg_outputs = [self.infer_seg_output(o) for o in outputs]
 
             output = outputs[0]
 
@@ -127,7 +123,13 @@ class UnetClassifyModelWrapper(pl.LightningModule):
             loss = cls_loss * (1 - self.seg_weight) + seg_loss * self.seg_weight
 
             self._log_metrics(seg_probs, seg_label, seg_loss, prefix="train.seg")
-            self._log_metrics(cls_probs, cls_trunc_label, cls_loss, ignore_mask=cls_ignore_mask, prefix="train.label")
+            self._log_metrics(
+                cls_probs,
+                cls_trunc_label,
+                cls_loss,
+                ignore_mask=cls_ignore_mask,
+                prefix="train.label",
+            )
             self.log(f"train.loss", loss, on_step=False, on_epoch=True)
             total_loss += loss
 
@@ -148,18 +150,14 @@ class UnetClassifyModelWrapper(pl.LightningModule):
         cls_trunc_label = cls_label[:, :-1, ...]
         cls_ignore_mask = cls_label[:, -1, ...]
         cls_ignore_mask = torch.stack(
-            [cls_ignore_mask] * (cls_label.shape[1] - 1),
-            dim=1
+            [cls_ignore_mask] * (cls_label.shape[1] - 1), dim=1
         )
 
         scaled_seg = generate_scales(seg_label, self.model.output_scales)
         scaled_cls = generate_scales(cls_label, self.model.output_scales)
 
         outputs = self(input)  # [B x C x H x W]
-        seg_outputs = [
-            self.infer_seg_output(o)
-            for o in outputs
-        ]
+        seg_outputs = [self.infer_seg_output(o) for o in outputs]
 
         output = outputs[0]
 
@@ -169,7 +167,13 @@ class UnetClassifyModelWrapper(pl.LightningModule):
         # Calculate metrics
         cls_probs = torch.sigmoid(output)  # B x C x H x W
         cls_probs = (cls_probs > 0.5).long()
-        self._log_metrics(cls_probs, cls_trunc_label, cls_loss, ignore_mask=cls_ignore_mask, prefix="val.label")
+        self._log_metrics(
+            cls_probs,
+            cls_trunc_label,
+            cls_loss,
+            ignore_mask=cls_ignore_mask,
+            prefix="val.label",
+        )
 
         seg_probs = torch.sigmoid(seg_outputs[0])
         seg_probs = (seg_probs > 0.5).long()
@@ -191,7 +195,9 @@ class UnetClassifyModelWrapper(pl.LightningModule):
         cls_label = batch[2]  # B x C+1 x H x W
         cls_trunc_label = cls_label[:, :-1, ...]
         cls_ignore_mask = cls_label[:, -1, ...]
-        cls_ignore_mask = torch.stack([cls_ignore_mask] * (cls_label.shape[1] - 1), dim=1)
+        cls_ignore_mask = torch.stack(
+            [cls_ignore_mask] * (cls_label.shape[1] - 1), dim=1
+        )
         orig_label_size = seg_label.shape[2:]
 
         if self.test_input_size is not None:
@@ -216,38 +222,50 @@ class UnetClassifyModelWrapper(pl.LightningModule):
         ben_true_pos = metrics.true_positive(
             cls_probs[:, 0, ...].unsqueeze(1),
             cls_trunc_label[:, 0, ...].unsqueeze(1),
-            cls_ignore_mask[:, 0, ...].unsqueeze(1)
+            cls_ignore_mask[:, 0, ...].unsqueeze(1),
         )
         ben_label_pos = metrics.label_positive(
             cls_probs[:, 0, ...].unsqueeze(1),
             cls_trunc_label[:, 0, ...].unsqueeze(1),
-            cls_ignore_mask[:, 0, ...].unsqueeze(1)
+            cls_ignore_mask[:, 0, ...].unsqueeze(1),
         )
         ben_pred_pos = metrics.prod_positive(
             cls_probs[:, 0, ...].unsqueeze(1),
             cls_trunc_label[:, 0, ...].unsqueeze(1),
-            cls_ignore_mask[:, 0, ...].unsqueeze(1)
+            cls_ignore_mask[:, 0, ...].unsqueeze(1),
         )
-        total_cls_ben_iou = metrics.iou(
-            cls_probs[:, 0, ...].unsqueeze(1),
-            cls_trunc_label[:, 0, ...].unsqueeze(1),
-            cls_ignore_mask[:, 0, ...].unsqueeze(1)
-        ) * batch_size
-        total_cls_ben_dice = metrics.dice(
-            cls_probs[:, 0, ...].unsqueeze(1),
-            cls_trunc_label[:, 0, ...].unsqueeze(1),
-            cls_ignore_mask[:, 0, ...].unsqueeze(1)
-        ) * batch_size
-        total_cls_ben_precision = metrics.precision(
-            cls_probs[:, 0, ...].unsqueeze(1),
-            cls_trunc_label[:, 0, ...].unsqueeze(1),
-            cls_ignore_mask[:, 0, ...].unsqueeze(1)
-        ) * batch_size
-        total_cls_ben_recall = metrics.recall(
-            cls_probs[:, 0, ...].unsqueeze(1),
-            cls_trunc_label[:, 0, ...].unsqueeze(1),
-            cls_ignore_mask[:, 0, ...].unsqueeze(1)
-        ) * batch_size
+        total_cls_ben_iou = (
+            metrics.iou(
+                cls_probs[:, 0, ...].unsqueeze(1),
+                cls_trunc_label[:, 0, ...].unsqueeze(1),
+                cls_ignore_mask[:, 0, ...].unsqueeze(1),
+            )
+            * batch_size
+        )
+        total_cls_ben_dice = (
+            metrics.dice(
+                cls_probs[:, 0, ...].unsqueeze(1),
+                cls_trunc_label[:, 0, ...].unsqueeze(1),
+                cls_ignore_mask[:, 0, ...].unsqueeze(1),
+            )
+            * batch_size
+        )
+        total_cls_ben_precision = (
+            metrics.precision(
+                cls_probs[:, 0, ...].unsqueeze(1),
+                cls_trunc_label[:, 0, ...].unsqueeze(1),
+                cls_ignore_mask[:, 0, ...].unsqueeze(1),
+            )
+            * batch_size
+        )
+        total_cls_ben_recall = (
+            metrics.recall(
+                cls_probs[:, 0, ...].unsqueeze(1),
+                cls_trunc_label[:, 0, ...].unsqueeze(1),
+                cls_ignore_mask[:, 0, ...].unsqueeze(1),
+            )
+            * batch_size
+        )
 
         # logger.info(f"Benign P/R/D: {total_cls_ben_precision.item()} {total_cls_ben_recall.item()} {total_cls_ben_dice.item()}")
 
@@ -255,50 +273,56 @@ class UnetClassifyModelWrapper(pl.LightningModule):
         mal_true_pos = metrics.true_positive(
             cls_probs[:, 1, ...].unsqueeze(1),
             cls_trunc_label[:, 1, ...].unsqueeze(1),
-            cls_ignore_mask[:, 1, ...].unsqueeze(1)
+            cls_ignore_mask[:, 1, ...].unsqueeze(1),
         )
         mal_label_pos = metrics.label_positive(
             cls_probs[:, 1, ...].unsqueeze(1),
             cls_trunc_label[:, 1, ...].unsqueeze(1),
-            cls_ignore_mask[:, 1, ...].unsqueeze(1)
+            cls_ignore_mask[:, 1, ...].unsqueeze(1),
         )
         mal_pred_pos = metrics.prod_positive(
             cls_probs[:, 1, ...].unsqueeze(1),
             cls_trunc_label[:, 1, ...].unsqueeze(1),
-            cls_ignore_mask[:, 1, ...].unsqueeze(1)
+            cls_ignore_mask[:, 1, ...].unsqueeze(1),
         )
-        total_cls_mal_iou = metrics.iou(
-            cls_probs[:, 1, ...].unsqueeze(1),
-            cls_trunc_label[:, 1, ...].unsqueeze(1),
-            cls_ignore_mask[:, 1, ...].unsqueeze(1)
-        ) * batch_size
-        total_cls_mal_dice = metrics.dice(
-            cls_probs[:, 1, ...].unsqueeze(1),
-            cls_trunc_label[:, 1, ...].unsqueeze(1),
-            cls_ignore_mask[:, 1, ...].unsqueeze(1)
-        ) * batch_size
-        total_cls_mal_precision = metrics.precision(
-            cls_probs[:, 1, ...].unsqueeze(1),
-            cls_trunc_label[:, 1, ...].unsqueeze(1),
-            cls_ignore_mask[:, 1, ...].unsqueeze(1)
-        ) * batch_size
-        total_cls_mal_recall = metrics.recall(
-            cls_probs[:, 1, ...].unsqueeze(1),
-            cls_trunc_label[:, 1, ...].unsqueeze(1),
-            cls_ignore_mask[:, 1, ...].unsqueeze(1)
-        ) * batch_size
+        total_cls_mal_iou = (
+            metrics.iou(
+                cls_probs[:, 1, ...].unsqueeze(1),
+                cls_trunc_label[:, 1, ...].unsqueeze(1),
+                cls_ignore_mask[:, 1, ...].unsqueeze(1),
+            )
+            * batch_size
+        )
+        total_cls_mal_dice = (
+            metrics.dice(
+                cls_probs[:, 1, ...].unsqueeze(1),
+                cls_trunc_label[:, 1, ...].unsqueeze(1),
+                cls_ignore_mask[:, 1, ...].unsqueeze(1),
+            )
+            * batch_size
+        )
+        total_cls_mal_precision = (
+            metrics.precision(
+                cls_probs[:, 1, ...].unsqueeze(1),
+                cls_trunc_label[:, 1, ...].unsqueeze(1),
+                cls_ignore_mask[:, 1, ...].unsqueeze(1),
+            )
+            * batch_size
+        )
+        total_cls_mal_recall = (
+            metrics.recall(
+                cls_probs[:, 1, ...].unsqueeze(1),
+                cls_trunc_label[:, 1, ...].unsqueeze(1),
+                cls_ignore_mask[:, 1, ...].unsqueeze(1),
+            )
+            * batch_size
+        )
 
         # logger.info(f"Malignant P/R/D: {total_cls_mal_precision.item()} {total_cls_mal_recall.item()} {total_cls_mal_dice.item()}")
 
-        seg_true_pos = metrics.true_positive(
-            seg_probs, seg_label
-        )
-        seg_label_pos = metrics.label_positive(
-            seg_probs, seg_label
-        )
-        seg_pred_pos = metrics.prod_positive(
-            seg_probs, seg_label
-        )
+        seg_true_pos = metrics.true_positive(seg_probs, seg_label)
+        seg_label_pos = metrics.label_positive(seg_probs, seg_label)
+        seg_pred_pos = metrics.prod_positive(seg_probs, seg_label)
 
         total_seg_iou = metrics.iou(seg_probs, seg_label) * batch_size
         total_seg_dice = metrics.dice(seg_probs, seg_label) * batch_size
@@ -306,29 +330,31 @@ class UnetClassifyModelWrapper(pl.LightningModule):
         total_seg_recall = metrics.recall(seg_probs, seg_label) * batch_size
 
         ben_label_obj_count = metrics.label_object_count(
-            cls_probs[0], cls_trunc_label[0],
-            cls_ignore_mask[0], dim=0
+            cls_probs[0], cls_trunc_label[0], cls_ignore_mask[0], dim=0
         )
         ben_pred_obj_count = metrics.pred_object_count(
-            cls_probs[0], cls_trunc_label[0],
-            cls_ignore_mask[0], dim=0
+            cls_probs[0], cls_trunc_label[0], cls_ignore_mask[0], dim=0
         )
         ben_true_obj_count = metrics.true_object_count(
-            cls_probs[0], cls_trunc_label[0],
-            cls_ignore_mask[0], dim=0, iou=self.iou_thres
+            cls_probs[0],
+            cls_trunc_label[0],
+            cls_ignore_mask[0],
+            dim=0,
+            iou=self.iou_thres,
         )
 
         mal_label_obj_count = metrics.label_object_count(
-            cls_probs[0], cls_trunc_label[0],
-            cls_ignore_mask[0], dim=1
+            cls_probs[0], cls_trunc_label[0], cls_ignore_mask[0], dim=1
         )
         mal_pred_obj_count = metrics.pred_object_count(
-            cls_probs[0], cls_trunc_label[0],
-            cls_ignore_mask[0], dim=1
+            cls_probs[0], cls_trunc_label[0], cls_ignore_mask[0], dim=1
         )
         mal_true_obj_count = metrics.true_object_count(
-            cls_probs[0], cls_trunc_label[0],
-            cls_ignore_mask[0], dim=1, iou=self.iou_thres
+            cls_probs[0],
+            cls_trunc_label[0],
+            cls_ignore_mask[0],
+            dim=1,
+            iou=self.iou_thres,
         )
 
         return {
@@ -359,7 +385,7 @@ class UnetClassifyModelWrapper(pl.LightningModule):
             f"{dataloader_idx}/mal_label_obj_count": mal_label_obj_count,
             f"{dataloader_idx}/mal_pred_obj_count": mal_pred_obj_count,
             f"{dataloader_idx}/mal_true_obj_count": mal_true_obj_count,
-            f"{dataloader_idx}/batch_size": batch_size
+            f"{dataloader_idx}/batch_size": batch_size,
         }
 
     def test_epoch_end(self, outputs):
@@ -372,209 +398,261 @@ class UnetClassifyModelWrapper(pl.LightningModule):
 
         for dataloader_idx, output in zip(loader_indices, outputs):
             test_name = self.test_names[dataloader_idx]
-            sum_batch_size = sum([
-                o.get(f"{dataloader_idx}/batch_size", 0)
-                for o in output
-            ])
+            sum_batch_size = sum(
+                [o.get(f"{dataloader_idx}/batch_size", 0) for o in output]
+            )
 
             m_names = [
                 f"{dataloader_idx}/total_seg_iou",
                 f"{dataloader_idx}/total_seg_dice",
                 f"{dataloader_idx}/total_seg_precision",
-                f"{dataloader_idx}/total_seg_recall"
+                f"{dataloader_idx}/total_seg_recall",
             ]
 
             display_names = [
                 f"test.{test_name}.iou.seg.macro",
                 f"test.{test_name}.dice.seg.macro",
                 f"test.{test_name}.precision.seg.macro",
-                f"test.{test_name}.recall.seg.macro"
+                f"test.{test_name}.recall.seg.macro",
             ]
 
             for m_name, display_name in zip(m_names, display_names):
-                sum_m = sum([
-                    o.get(m_name, 0)
-                    for o in output
-                ])
+                sum_m = sum([o.get(m_name, 0) for o in output])
                 val = sum_m / sum_batch_size
-                self.log(display_name, val, prog_bar=False, on_step=False, on_epoch=True)
+                self.log(
+                    display_name, val, prog_bar=False, on_step=False, on_epoch=True
+                )
 
-            total_ben_label_count = sum([
-                o.get(f"{dataloader_idx}/ben_label_pos", 0)
-                for o in output
-            ])
-            total_ben_pred_count = sum([
-                o.get(f"{dataloader_idx}/ben_pred_pos", 0)
-                for o in output
-            ])
-            total_ben_true_count = sum([
-                o.get(f"{dataloader_idx}/ben_true_pos", 0)
-                for o in output
-            ])
-            total_mal_label_count = sum([
-                o.get(f"{dataloader_idx}/mal_label_pos", 0)
-                for o in output
-            ])
-            total_mal_pred_count = sum([
-                o.get(f"{dataloader_idx}/mal_pred_pos", 0)
-                for o in output
-            ])
-            total_mal_true_count = sum([
-                o.get(f"{dataloader_idx}/mal_true_pos", 0)
-                for o in output
-            ])
-            total_seg_label_count = sum([
-                o.get(f"{dataloader_idx}/seg_label_pos", 0)
-                for o in output
-            ])
-            total_seg_pred_count = sum([
-                o.get(f"{dataloader_idx}/seg_pred_pos", 0)
-                for o in output
-            ])
-            total_seg_true_count = sum([
-                o.get(f"{dataloader_idx}/seg_true_pos", 0)
-                for o in output
-            ])
+            total_ben_label_count = sum(
+                [o.get(f"{dataloader_idx}/ben_label_pos", 0) for o in output]
+            )
+            total_ben_pred_count = sum(
+                [o.get(f"{dataloader_idx}/ben_pred_pos", 0) for o in output]
+            )
+            total_ben_true_count = sum(
+                [o.get(f"{dataloader_idx}/ben_true_pos", 0) for o in output]
+            )
+            total_mal_label_count = sum(
+                [o.get(f"{dataloader_idx}/mal_label_pos", 0) for o in output]
+            )
+            total_mal_pred_count = sum(
+                [o.get(f"{dataloader_idx}/mal_pred_pos", 0) for o in output]
+            )
+            total_mal_true_count = sum(
+                [o.get(f"{dataloader_idx}/mal_true_pos", 0) for o in output]
+            )
+            total_seg_label_count = sum(
+                [o.get(f"{dataloader_idx}/seg_label_pos", 0) for o in output]
+            )
+            total_seg_pred_count = sum(
+                [o.get(f"{dataloader_idx}/seg_pred_pos", 0) for o in output]
+            )
+            total_seg_true_count = sum(
+                [o.get(f"{dataloader_idx}/seg_true_pos", 0) for o in output]
+            )
 
             ben_precision = total_ben_true_count / max(total_ben_pred_count, 1e-5)
             ben_recall = total_ben_true_count / max(total_ben_label_count, 1e-5)
-            ben_dice = 2 * ben_precision * ben_recall / max(ben_precision + ben_recall, 1e-5)
-            ben_iou = total_ben_true_count / max(1e-5, total_ben_label_count + total_ben_pred_count - total_ben_true_count)
+            ben_dice = (
+                2 * ben_precision * ben_recall / max(ben_precision + ben_recall, 1e-5)
+            )
+            ben_iou = total_ben_true_count / max(
+                1e-5,
+                total_ben_label_count + total_ben_pred_count - total_ben_true_count,
+            )
             self.log(
                 f"test.{test_name}.precision.label_ben.micro",
-                ben_precision, prog_bar=False,
-                on_step=False, on_epoch=True
+                ben_precision,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.recall.label_ben.micro",
-                ben_recall, prog_bar=False,
-                on_step=False, on_epoch=True
+                ben_recall,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.dice.label_ben.micro",
-                ben_dice, prog_bar=False,
-                on_step=False, on_epoch=True
+                ben_dice,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.iou.label_ben.micro",
-                ben_iou, prog_bar=False,
-                on_step=False, on_epoch=True
+                ben_iou,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
 
             mal_precision = total_mal_true_count / max(total_mal_pred_count, 1e-5)
             mal_recall = total_mal_true_count / max(total_mal_label_count, 1e-5)
-            mal_dice = 2 * mal_precision * mal_recall / max(mal_precision + mal_recall, 1e-5)
-            mal_iou = total_mal_true_count / max(1e-5, total_mal_label_count + total_mal_pred_count - total_mal_true_count)
+            mal_dice = (
+                2 * mal_precision * mal_recall / max(mal_precision + mal_recall, 1e-5)
+            )
+            mal_iou = total_mal_true_count / max(
+                1e-5,
+                total_mal_label_count + total_mal_pred_count - total_mal_true_count,
+            )
             self.log(
                 f"test.{test_name}.precision.label_mal.micro",
-                mal_precision, prog_bar=False,
-                on_step=False, on_epoch=True
+                mal_precision,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.recall.label_mal.micro",
-                mal_recall, prog_bar=False,
-                on_step=False, on_epoch=True
+                mal_recall,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.dice.label_mal.micro",
-                mal_dice, prog_bar=False,
-                on_step=False, on_epoch=True
+                mal_dice,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.iou.label_mal.micro",
-                mal_iou, prog_bar=False,
-                on_step=False, on_epoch=True
+                mal_iou,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
 
             seg_precision = total_seg_true_count / max(total_seg_pred_count, 1e-5)
             seg_recall = total_seg_true_count / max(total_seg_label_count, 1e-5)
-            seg_dice = 2 * seg_precision * seg_recall / max(seg_precision + seg_recall, 1e-5)
-            seg_iou = total_seg_true_count / max(1e-5, total_seg_label_count + total_seg_pred_count - total_seg_true_count)
+            seg_dice = (
+                2 * seg_precision * seg_recall / max(seg_precision + seg_recall, 1e-5)
+            )
+            seg_iou = total_seg_true_count / max(
+                1e-5,
+                total_seg_label_count + total_seg_pred_count - total_seg_true_count,
+            )
             self.log(
                 f"test.{test_name}.precision.seg.micro",
-                seg_precision, prog_bar=False,
-                on_step=False, on_epoch=True
+                seg_precision,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.recall.seg.micro",
-                seg_recall, prog_bar=False,
-                on_step=False, on_epoch=True
+                seg_recall,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.dice.seg.micro",
-                seg_dice, prog_bar=False,
-                on_step=False, on_epoch=True
+                seg_dice,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.iou.seg.micro",
-                seg_iou, prog_bar=False,
-                on_step=False, on_epoch=True
+                seg_iou,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
 
-            total_ben_label_obj_count = sum([
-                o.get(f"{dataloader_idx}/ben_label_obj_count", 0)
-                for o in output
-            ])
-            total_ben_pred_obj_count = sum([
-                o.get(f"{dataloader_idx}/ben_pred_obj_count", 0)
-                for o in output
-            ])
-            total_ben_true_obj_count = sum([
-                o.get(f"{dataloader_idx}/ben_true_obj_count", 0)
-                for o in output
-            ])
-            total_mal_label_obj_count = sum([
-                o.get(f"{dataloader_idx}/mal_label_obj_count", 0)
-                for o in output
-            ])
-            total_mal_pred_obj_count = sum([
-                o.get(f"{dataloader_idx}/mal_pred_obj_count", 0)
-                for o in output
-            ])
-            total_mal_true_obj_count = sum([
-                o.get(f"{dataloader_idx}/mal_true_obj_count", 0)
-                for o in output
-            ])
+            total_ben_label_obj_count = sum(
+                [o.get(f"{dataloader_idx}/ben_label_obj_count", 0) for o in output]
+            )
+            total_ben_pred_obj_count = sum(
+                [o.get(f"{dataloader_idx}/ben_pred_obj_count", 0) for o in output]
+            )
+            total_ben_true_obj_count = sum(
+                [o.get(f"{dataloader_idx}/ben_true_obj_count", 0) for o in output]
+            )
+            total_mal_label_obj_count = sum(
+                [o.get(f"{dataloader_idx}/mal_label_obj_count", 0) for o in output]
+            )
+            total_mal_pred_obj_count = sum(
+                [o.get(f"{dataloader_idx}/mal_pred_obj_count", 0) for o in output]
+            )
+            total_mal_true_obj_count = sum(
+                [o.get(f"{dataloader_idx}/mal_true_obj_count", 0) for o in output]
+            )
 
-            ben_obj_precision = total_ben_true_obj_count / max(total_ben_pred_obj_count, 1e-5)
-            ben_obj_recall = total_ben_true_obj_count / max(total_ben_label_obj_count, 1e-5)
-            ben_obj_dice = 2 * ben_obj_precision * ben_obj_recall / max(ben_obj_precision + ben_obj_recall, 1e-5)
+            ben_obj_precision = total_ben_true_obj_count / max(
+                total_ben_pred_obj_count, 1e-5
+            )
+            ben_obj_recall = total_ben_true_obj_count / max(
+                total_ben_label_obj_count, 1e-5
+            )
+            ben_obj_dice = (
+                2
+                * ben_obj_precision
+                * ben_obj_recall
+                / max(ben_obj_precision + ben_obj_recall, 1e-5)
+            )
             self.log(
                 f"test.{test_name}.oprecision.label_ben.micro/{self.iou_thres}",
-                ben_obj_precision, prog_bar=False,
-                on_step=False, on_epoch=True
+                ben_obj_precision,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.orecall.label_ben.micro/{self.iou_thres}",
-                ben_obj_recall, prog_bar=False,
-                on_step=False, on_epoch=True
+                ben_obj_recall,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
                 f"test.{test_name}.odice.label_ben.micro/{self.iou_thres}",
-                ben_obj_dice, prog_bar=False,
-                on_step=False, on_epoch=True
+                ben_obj_dice,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
 
-            mal_obj_precision = total_mal_true_obj_count / max(total_mal_pred_obj_count, 1e-5)
-            mal_obj_recall = total_mal_true_obj_count / max(total_mal_label_obj_count, 1e-5)
-            mal_obj_dice = 2 * mal_obj_precision * mal_obj_recall / max(mal_obj_precision + mal_obj_recall, 1e-5)
+            mal_obj_precision = total_mal_true_obj_count / max(
+                total_mal_pred_obj_count, 1e-5
+            )
+            mal_obj_recall = total_mal_true_obj_count / max(
+                total_mal_label_obj_count, 1e-5
+            )
+            mal_obj_dice = (
+                2
+                * mal_obj_precision
+                * mal_obj_recall
+                / max(mal_obj_precision + mal_obj_recall, 1e-5)
+            )
             self.log(
                 f"test.{test_name}.oprecision.label_mal.micro/{self.iou_thres}",
-                mal_obj_precision, prog_bar=False,
-                on_step=False, on_epoch=True
+                mal_obj_precision,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
-                f"test.{test_name}.orecall.label_mal.micro/{self.iou_thres}", mal_obj_recall, prog_bar=False,
-                on_step=False, on_epoch=True
+                f"test.{test_name}.orecall.label_mal.micro/{self.iou_thres}",
+                mal_obj_recall,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
             self.log(
-                f"test.{test_name}.odice.label_mal.micro/{self.iou_thres}", mal_obj_dice, prog_bar=False,
-                on_step=False, on_epoch=True
+                f"test.{test_name}.odice.label_mal.micro/{self.iou_thres}",
+                mal_obj_dice,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
             )
 
-    def _log_metrics(self, pred_probs, label, loss, prefix: str,
-        ignore_mask=None
-    ):
+    def _log_metrics(self, pred_probs, label, loss, prefix: str, ignore_mask=None):
         iou = metrics.iou(pred_probs, label, ignore_mask=ignore_mask)
         self.log(f"{prefix}.iou", iou, prog_bar=False, on_step=False, on_epoch=True)
 
@@ -582,9 +660,17 @@ class UnetClassifyModelWrapper(pl.LightningModule):
         self.log(f"{prefix}.dice", dice, prog_bar=False, on_step=False, on_epoch=True)
 
         precision = metrics.precision(pred_probs, label, ignore_mask=ignore_mask)
-        self.log(f"{prefix}.precision", precision, prog_bar=False, on_step=False, on_epoch=True)
+        self.log(
+            f"{prefix}.precision",
+            precision,
+            prog_bar=False,
+            on_step=False,
+            on_epoch=True,
+        )
 
         recall = metrics.recall(pred_probs, label, ignore_mask=ignore_mask)
-        self.log(f"{prefix}.recall", recall, prog_bar=False, on_step=False, on_epoch=True)
+        self.log(
+            f"{prefix}.recall", recall, prog_bar=False, on_step=False, on_epoch=True
+        )
 
         self.log(f"{prefix}.loss", loss, on_step=False, on_epoch=True)

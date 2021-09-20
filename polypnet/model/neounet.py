@@ -40,7 +40,7 @@ class NeoUNet(nn.Module):
 
     @property
     def output_scales(self):
-        return 1., 1., 1., 1.
+        return 1.0, 1.0, 1.0, 1.0
 
     def set_num_classes(self, num_classes: int):
         self.num_classes = num_classes
@@ -57,14 +57,12 @@ class NeoUNet(nn.Module):
             nn.LeakyReLU(),
             nn.Conv2d(out_channels // 2, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
         )
 
     def _upsampler_block(self, in_channels, out_channels):
         return nn.ConvTranspose2d(
-            in_channels, out_channels,
-            kernel_size=4, stride=2,
-            padding=1, bias=False
+            in_channels, out_channels, kernel_size=4, stride=2, padding=1, bias=False
         )
 
     def forward(self, x):

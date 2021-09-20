@@ -21,7 +21,9 @@ class MaskedBinaryCrossEntropyLoss(nn.Module):
 
         value = label[:, :-1, ...].float()
 
-        total_entropy = F.binary_cross_entropy_with_logits(pred, value.float(), reduction="none")
+        total_entropy = F.binary_cross_entropy_with_logits(
+            pred, value.float(), reduction="none"
+        )
 
         masked_entropy = total_entropy * (1 - mask)
         count = torch.numel(masked_entropy) - torch.sum(mask)
@@ -52,12 +54,18 @@ class MaskedTverskyLoss(nn.Module):
         false_neg = torch.sum(value * (1 - probs) * (1 - mask), dim=[0, 2, 3])
         false_pos = torch.sum(probs * (1 - value) * (1 - mask), dim=[0, 2, 3])
         return 1 - torch.mean(
-            (true_pos + self.eps) / (true_pos + self.alpha * false_neg + (1 - self.alpha) * false_pos + self.eps)
+            (true_pos + self.eps)
+            / (
+                true_pos
+                + self.alpha * false_neg
+                + (1 - self.alpha) * false_pos
+                + self.eps
+            )
         )
 
 
 class FocalMaskedTverskyLoss(MaskedTverskyLoss):
-    def __init__(self, gamma=4/3, ben_ratio=1, **kwargs):
+    def __init__(self, gamma=4 / 3, ben_ratio=1, **kwargs):
         super().__init__(**kwargs)
         self.gamma = gamma
         self.ben_ratio = ben_ratio
@@ -73,11 +81,11 @@ class FocalMaskedTverskyLoss(MaskedTverskyLoss):
         false_neg = torch.sum(value * (1 - probs) * (1 - mask), dim=[0, 2, 3])
         false_pos = torch.sum(probs * (1 - value) * (1 - mask), dim=[0, 2, 3])
 
-        t = (true_pos + self.eps) / (true_pos + self.alpha * false_neg + (1 - self.alpha) * false_pos + self.eps)
-
-        x = torch.pow(
-            1 - t, 1 / self.gamma
+        t = (true_pos + self.eps) / (
+            true_pos + self.alpha * false_neg + (1 - self.alpha) * false_pos + self.eps
         )
+
+        x = torch.pow(1 - t, 1 / self.gamma)
         x[0] = x[0] * (self.ben_ratio / (self.ben_ratio + 1))
         x[1] = x[1] * (1 / (self.ben_ratio + 1))
 
@@ -85,19 +93,27 @@ class FocalMaskedTverskyLoss(MaskedTverskyLoss):
 
 
 class MaskedSslLoss(pl.LightningModule):
-    def __init__(self,
-        kernel_size=3, padding=1,
-        classes=2, std=1.5,
-        eps=1e-2, e_cutoff=0.3,
+    def __init__(
+        self,
+        kernel_size=3,
+        padding=1,
+        classes=2,
+        std=1.5,
+        eps=1e-2,
+        e_cutoff=0.3,
         dilation=1,
         sub_eps=1e-8,
     ):
         super().__init__()
 
         self.conv = nn.Conv2d(
-            classes, classes, kernel_size=kernel_size,
-            padding=padding, bias=False,
-            groups=classes, dilation=dilation
+            classes,
+            classes,
+            kernel_size=kernel_size,
+            padding=padding,
+            bias=False,
+            groups=classes,
+            dilation=dilation,
         )
         weight = gaussian_kernel(kernel_size, std=std, channels=classes, dim=2)
         self.conv.weight = nn.parameter.Parameter(weight, requires_grad=False)

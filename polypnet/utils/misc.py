@@ -38,7 +38,7 @@ def get_current_git_commit() -> Optional[str]:
     with open(head_file, "rt") as f:
         content = str(f.read())
 
-    head_ref = content.split(' ')[1].strip()
+    head_ref = content.split(" ")[1].strip()
     head_ref_file = os.path.join(".git", head_ref)
 
     with open(head_ref_file, "rt") as f:

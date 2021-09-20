@@ -37,21 +37,18 @@ def main():
         print(name)
         shutil.copy2(
             os.path.join(SOURCE, "images", f"{name}.jpeg"),
-            os.path.join(TARGET, "images", f"{name}.jpeg")
+            os.path.join(TARGET, "images", f"{name}.jpeg"),
         )
         shutil.copy2(
             os.path.join(SOURCE, "label_images", f"{name}.png"),
-            os.path.join(TARGET, "label_images", f"{name}.png")
+            os.path.join(TARGET, "label_images", f"{name}.png"),
         )
         shutil.copy2(
             os.path.join(SOURCE, "mask_images", f"{name}.png"),
-            os.path.join(TARGET, "mask_images", f"{name}.png")
+            os.path.join(TARGET, "mask_images", f"{name}.png"),
         )
 
-    dataset = LciMulticlassDataset(
-        os.path.join(TARGET),
-        return_paths=True
-    )
+    dataset = LciMulticlassDataset(os.path.join(TARGET), return_paths=True)
 
     analyze_multiclass_dataset(dataset)
 

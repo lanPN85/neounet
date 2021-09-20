@@ -17,7 +17,7 @@ from .encoders import hardnet
 class GCPACCNet(nn.Module):
     @property
     def output_scales(self):
-        return 1., 1., 1., 1.
+        return 1.0, 1.0, 1.0, 1.0
 
     def __init__(self, pretrained=True, num_classes=1):
         super(GCPACCNet, self).__init__()
@@ -32,10 +32,18 @@ class GCPACCNet(nn.Module):
         self.fam34 = FAM(320, interplanes, interplanes, interplanes)
         self.fam23 = FAM(128, interplanes, interplanes, interplanes)
 
-        self.linear5 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear4 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear3 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear2 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
+        self.linear5 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear4 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear3 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear2 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
 
         self.conva = nn.Sequential(
             nn.Conv2d(inplanes, interplanes, 3, padding=1, bias=False),
@@ -49,10 +57,18 @@ class GCPACCNet(nn.Module):
         self.local_attention_2 = LocalAttenModule(interplanes)
 
     def set_num_classes(self, num_classes: int):
-        self.linear5 = nn.Conv2d(self.interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear4 = nn.Conv2d(self.interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear3 = nn.Conv2d(self.interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear2 = nn.Conv2d(self.interplanes, num_classes, kernel_size=3, stride=1, padding=1)
+        self.linear5 = nn.Conv2d(
+            self.interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear4 = nn.Conv2d(
+            self.interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear3 = nn.Conv2d(
+            self.interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear2 = nn.Conv2d(
+            self.interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
 
     def forward(self, x):
         """Forward method

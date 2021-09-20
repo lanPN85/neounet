@@ -11,4 +11,3 @@ class PairedTransform(nn.Module):
         super().__init__()
 
         self.transforms = transforms
-

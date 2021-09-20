@@ -16,7 +16,7 @@ from .encoders import hardnet
 class SCWSRCCANet(nn.Module):
     @property
     def output_scales(self):
-        return 1., 1., 1., 1.
+        return 1.0, 1.0, 1.0, 1.0
 
     def __init__(self, num_classes=1, pretrained=True):
         super(SCWSRCCANet, self).__init__()
@@ -32,9 +32,15 @@ class SCWSRCCANet(nn.Module):
         self.fam23 = FAMSCWS(128, interplanes, interplanes, interplanes)
 
         self.linear5 = nn.Conv2d(1024, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear4 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear3 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear2 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
+        self.linear4 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear3 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear2 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
 
         self.conva = nn.Sequential(
             nn.Conv2d(inplanes, interplanes, 3, padding=1, bias=False),
@@ -52,9 +58,15 @@ class SCWSRCCANet(nn.Module):
         self.num_classes = num_classes
 
         self.linear5 = nn.Conv2d(1024, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear4 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear3 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
-        self.linear2 = nn.Conv2d(interplanes, num_classes, kernel_size=3, stride=1, padding=1)
+        self.linear4 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear3 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
+        self.linear2 = nn.Conv2d(
+            interplanes, num_classes, kernel_size=3, stride=1, padding=1
+        )
 
     def forward(self, x):
         hardnetout = self.hardnet(x)
@@ -96,7 +108,7 @@ class SCWSRCCANetMergeScales(SCWSRCCANet):
 
     @property
     def output_scales(self):
-        return 1., 1., 1., 1., 1.
+        return 1.0, 1.0, 1.0, 1.0, 1.0
 
     def set_num_classes(self, num_classes: int):
         super().set_num_classes(num_classes)

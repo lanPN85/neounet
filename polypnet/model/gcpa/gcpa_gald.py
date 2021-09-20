@@ -56,14 +56,14 @@ class FAMSCWS(nn.Module):
         else:
             z1 = F.relu(w1 * down, inplace=True)  # down is mask
 
-        z1_att = F.adaptive_avg_pool2d(self.conv_att1(z1), (1,1))
+        z1_att = F.adaptive_avg_pool2d(self.conv_att1(z1), (1, 1))
         z1 = z1_att * z1
 
         if down_1.size()[2:] != left.size()[2:]:
             down_1 = F.interpolate(down_1, size=left.size()[2:], mode="bilinear")
 
         z2 = F.relu(down_1 * left, inplace=True)  # left is mask
-        z2_att = F.adaptive_avg_pool2d(self.conv_att2(z2), (1,1))
+        z2_att = F.adaptive_avg_pool2d(self.conv_att2(z2), (1, 1))
         z2 = z2_att * z2
 
         # z3
@@ -72,7 +72,7 @@ class FAMSCWS(nn.Module):
             down_2 = F.interpolate(down_2, size=left.size()[2:], mode="bilinear")
         z3 = F.relu(down_2 * left, inplace=True)  # down_2 is mask
 
-        z3_att = F.adaptive_avg_pool2d(self.conv_att3(z3), (1,1))
+        z3_att = F.adaptive_avg_pool2d(self.conv_att3(z3), (1, 1))
         z3 = z3_att * z3
         out = (z1 + z2 + z3) / (z1_att + z2_att + z3_att)
         return F.relu(self.bn3(self.conv3(out)), inplace=True)

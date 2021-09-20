@@ -8,10 +8,11 @@ from polypnet.data.augment import Augmenter, TripletAugmenter
 
 
 class PolypDataset(Dataset, ABC):
-    def __init__(self,
+    def __init__(
+        self,
         shape: Optional[Tuple[int, int]] = None,
         return_paths=False,
-        augmenter: Augmenter = Augmenter()
+        augmenter: Augmenter = Augmenter(),
     ) -> None:
         super().__init__()
 
@@ -47,10 +48,11 @@ class PolypDataset(Dataset, ABC):
 
 
 class PolypMulticlassDataset(Dataset):
-    def __init__(self,
+    def __init__(
+        self,
         shape: Optional[Tuple[int, int]] = None,
         return_paths=False,
-        augmenter: TripletAugmenter = TripletAugmenter()
+        augmenter: TripletAugmenter = TripletAugmenter(),
     ) -> None:
         super().__init__()
 

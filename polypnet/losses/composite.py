@@ -12,7 +12,7 @@ class CompoundLoss(pl.LightningModule):
 
         if weights is None:
             N = len(losses)
-            weights = [1./N] * N
+            weights = [1.0 / N] * N
 
         self.weights = weights
         self.losses = nn.ModuleList(losses)
@@ -31,9 +31,11 @@ class CompoundLoss(pl.LightningModule):
 
 
 class ConditionalCompoundLoss(pl.LightningModule):
-    def __init__(self, losses: Iterable,
+    def __init__(
+        self,
+        losses: Iterable,
         weights=None,
-        rules: Optional[Dict[int, Dict[str, Any]]] = None
+        rules: Optional[Dict[int, Dict[str, Any]]] = None,
     ):
         super().__init__()
 
@@ -42,7 +44,7 @@ class ConditionalCompoundLoss(pl.LightningModule):
 
         if weights is None:
             N = len(losses)
-            weights = [1./N] * N
+            weights = [1.0 / N] * N
 
         self.losses = nn.ModuleList(losses)
         self.weights = weights
@@ -64,7 +66,7 @@ class ConditionalCompoundLoss(pl.LightningModule):
             is_used = False
 
             start_epoch = rule.get("start_epoch", 0)
-            end_epoch = rule.get("end_epoch", float('inf'))
+            end_epoch = rule.get("end_epoch", float("inf"))
             is_used = (current_epoch >= start_epoch) and (current_epoch <= end_epoch)
 
             if is_used:

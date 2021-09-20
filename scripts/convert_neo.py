@@ -1,11 +1,11 @@
 import os
 import shutil
 
-SOURCE = 'data/NeoDataset-1300'
-TARGET = 'data/NeoDataset-1300_pub'
+SOURCE = "data/NeoDataset-1300"
+TARGET = "data/NeoDataset-1300_pub"
 
-TRAIN_TARGET = os.path.join(TARGET, 'Train')
-TEST_TARGET = os.path.join(TARGET, 'Test')
+TRAIN_TARGET = os.path.join(TARGET, "Train")
+TEST_TARGET = os.path.join(TARGET, "Test")
 
 os.makedirs(os.path.join(TARGET, "Test", "images"))
 os.makedirs(os.path.join(TARGET, "Test", "label_images"))
@@ -15,8 +15,8 @@ os.makedirs(os.path.join(TARGET, "Train", "images"))
 os.makedirs(os.path.join(TARGET, "Train", "label_images"))
 os.makedirs(os.path.join(TARGET, "Train", "mask_images"))
 
-TRAIN_FILE = os.path.join(SOURCE, 'train.txt')
-TEST_FILE = os.path.join(SOURCE, 'test.txt')
+TRAIN_FILE = os.path.join(SOURCE, "train.txt")
+TEST_FILE = os.path.join(SOURCE, "test.txt")
 
 
 groups = [
@@ -26,16 +26,16 @@ groups = [
 
 for list_file, target in groups:
     file_names = []
-    with open(list_file, 'rt') as f:
+    with open(list_file, "rt") as f:
         for line in f:
-            file_names.append(line.strip().split('.')[0])
+            file_names.append(line.strip().split(".")[0])
 
     for fn in file_names:
         print(fn)
-        image_path = os.path.join(SOURCE, 'images', f'{fn}.jpeg')
-        mask_path = os.path.join(SOURCE, 'mask_images', f'{fn}.png')
-        label_path = os.path.join(SOURCE, 'label_images', f'{fn}.png')
+        image_path = os.path.join(SOURCE, "images", f"{fn}.jpeg")
+        mask_path = os.path.join(SOURCE, "mask_images", f"{fn}.png")
+        label_path = os.path.join(SOURCE, "label_images", f"{fn}.png")
 
-        shutil.copy2(image_path, os.path.join(target, 'images', f'{fn}.jpeg'))
-        shutil.copy2(mask_path, os.path.join(target, 'mask_images', f'{fn}.png'))
-        shutil.copy2(label_path, os.path.join(target, 'label_images', f'{fn}.png'))
+        shutil.copy2(image_path, os.path.join(target, "images", f"{fn}.jpeg"))
+        shutil.copy2(mask_path, os.path.join(target, "mask_images", f"{fn}.png"))
+        shutil.copy2(label_path, os.path.join(target, "label_images", f"{fn}.png"))

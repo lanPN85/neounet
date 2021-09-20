@@ -17,21 +17,22 @@ torch.set_default_dtype(torch.float32)
 
 def _assert_no_grad(variables):
     for var in variables:
-        assert not var.requires_grad, \
-            "nn criterions don't compute the gradient w.r.t. targets - please " \
+        assert not var.requires_grad, (
+            "nn criterions don't compute the gradient w.r.t. targets - please "
             "mark these variables as volatile or not requiring gradients"
+        )
 
 
 def cdist(x, y):
-    '''
+    """
     Input: x is a Nxd Tensor
            y is a Mxd Tensor
     Output: dist is a NxM matrix where dist[i,j] is the norm
            between x[i,:] and y[j,:]
     i.e. dist[i,j] = ||x[i,:]-y[j,:]||
-    '''
+    """
     differences = x.unsqueeze(1) - y.unsqueeze(0)
-    distances = torch.sum(differences**2, -1).sqrt()
+    distances = torch.sum(differences ** 2, -1).sqrt()
     return distances
 
 
@@ -52,17 +53,17 @@ def averaged_hausdorff_distance(set1, set2, max_ahd=np.inf):
     set1 = np.array(set1)
     set2 = np.array(set2)
 
-    assert set1.ndim == 2, 'got %s' % set1.ndim
-    assert set2.ndim == 2, 'got %s' % set2.ndim
+    assert set1.ndim == 2, "got %s" % set1.ndim
+    assert set2.ndim == 2, "got %s" % set2.ndim
 
-    assert set1.shape[1] == set2.shape[1], \
-        'The points in both sets must have the same number of dimensions, got %s and %s.'\
+    assert set1.shape[1] == set2.shape[1], (
+        "The points in both sets must have the same number of dimensions, got %s and %s."
         % (set2.shape[1], set2.shape[1])
+    )
 
-    d2_matrix = pairwise_distances(set1, set2, metric='euclidean')
+    d2_matrix = pairwise_distances(set1, set2, metric="euclidean")
 
-    res = np.average(np.min(d2_matrix, axis=0)) + \
-        np.average(np.min(d2_matrix, axis=1))
+    res = np.average(np.min(d2_matrix, axis=0)) + np.average(np.min(d2_matrix, axis=1))
 
     return res
 
@@ -81,12 +82,13 @@ class AveragedHausdorffLoss(nn.Module):
         :return: The Averaged Hausdorff Distance between set1 and set2.
         """
 
-        assert set1.ndimension() == 2, 'got %s' % set1.ndimension()
-        assert set2.ndimension() == 2, 'got %s' % set2.ndimension()
+        assert set1.ndimension() == 2, "got %s" % set1.ndimension()
+        assert set2.ndimension() == 2, "got %s" % set2.ndimension()
 
-        assert set1.size()[1] == set2.size()[1], \
-            'The points in both sets must have the same number of dimensions, got %s and %s.'\
+        assert set1.size()[1] == set2.size()[1], (
+            "The points in both sets must have the same number of dimensions, got %s and %s."
             % (set2.size()[1], set2.size()[1])
+        )
 
         d2_matrix = cdist(set1, set2)
 
@@ -100,10 +102,13 @@ class AveragedHausdorffLoss(nn.Module):
 
 
 class WeightedHausdorffDistance(nn.Module):
-    def __init__(self,
-                 resized_height, resized_width,
-                 return_2_terms=False,
-                 device=torch.device('cpu')):
+    def __init__(
+        self,
+        resized_height,
+        resized_width,
+        return_2_terms=False,
+        device=torch.device("cpu"),
+    ):
         """
         :param resized_height: Number of rows in the image.
         :param resized_width: Number of columns in the image.
@@ -116,17 +121,20 @@ class WeightedHausdorffDistance(nn.Module):
 
         # Prepare all possible (row, col) locations in the image
         self.height, self.width = resized_height, resized_width
-        self.resized_size = torch.tensor([resized_height,
-                                          resized_width],
-                                         dtype=torch.get_default_dtype(),
-                                         device=device)
-        self.max_dist = math.sqrt(resized_height**2 + resized_width**2)
+        self.resized_size = torch.tensor(
+            [resized_height, resized_width],
+            dtype=torch.get_default_dtype(),
+            device=device,
+        )
+        self.max_dist = math.sqrt(resized_height ** 2 + resized_width ** 2)
         self.n_pixels = resized_height * resized_width
-        self.all_img_locations = torch.from_numpy(cartesian([np.arange(resized_height),
-                                                             np.arange(resized_width)]))
+        self.all_img_locations = torch.from_numpy(
+            cartesian([np.arange(resized_height), np.arange(resized_width)])
+        )
         # Convert to appropiate type
-        self.all_img_locations = torch.tensor(self.all_img_locations,
-                                              dtype=torch.get_default_dtype()).to(device)
+        self.all_img_locations = torch.tensor(
+            self.all_img_locations, dtype=torch.get_default_dtype()
+        ).to(device)
 
         self.return_2_terms = return_2_terms
 
@@ -153,11 +161,12 @@ class WeightedHausdorffDistance(nn.Module):
 
         _assert_no_grad(gt)
 
-        assert prob_map.dim() == 3, 'The probability map must be (B x H x W)'
-        assert prob_map.size()[1:3] == (self.height, self.width), \
-            'You must configure the WeightedHausdorffDistance with the height and width of the ' \
-            'probability map that you are using, got a probability map of size %s'\
+        assert prob_map.dim() == 3, "The probability map must be (B x H x W)"
+        assert prob_map.size()[1:3] == (self.height, self.width), (
+            "You must configure the WeightedHausdorffDistance with the height and width of the "
+            "probability map that you are using, got a probability map of size %s"
             % str(prob_map.size())
+        )
 
         batch_size = prob_map.shape[0]
         assert batch_size == len(gt)
@@ -170,13 +179,12 @@ class WeightedHausdorffDistance(nn.Module):
             prob_map_b = prob_map[b, :, :]
             gt_b = gt[b]
             orig_size_b = orig_sizes[b, :]
-            norm_factor = (orig_size_b/self.resized_size).unsqueeze(0)
+            norm_factor = (orig_size_b / self.resized_size).unsqueeze(0)
 
             # Pairwise distances between all possible locations and the GTed locations
             n_gt_pts = gt_b.size()[0]
-            normalized_x = norm_factor.repeat(self.n_pixels, 1) *\
-                self.all_img_locations
-            normalized_y = norm_factor.repeat(len(gt_b), 1)*gt_b
+            normalized_x = norm_factor.repeat(self.n_pixels, 1) * self.all_img_locations
+            normalized_y = norm_factor.repeat(len(gt_b), 1) * gt_b
             d_matrix = cdist(normalized_x, normalized_y)
 
             # Reshape probability map as a long column vector,
@@ -189,10 +197,10 @@ class WeightedHausdorffDistance(nn.Module):
             alpha = 4
 
             # Weighted Hausdorff Distance
-            term_1 = (1 / (n_est_pts + eps)) * \
-                torch.sum(p * torch.min(d_matrix, 1)[0])
-            d_div_p = torch.min((d_matrix + eps) /
-                                (p_replicated**alpha + eps / self.max_dist), 0)[0]
+            term_1 = (1 / (n_est_pts + eps)) * torch.sum(p * torch.min(d_matrix, 1)[0])
+            d_div_p = torch.min(
+                (d_matrix + eps) / (p_replicated ** alpha + eps / self.max_dist), 0
+            )[0]
             d_div_p = torch.clamp(d_div_p, 0, self.max_dist)
             term_2 = torch.mean(d_div_p, 0)
 

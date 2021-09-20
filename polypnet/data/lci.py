@@ -15,13 +15,15 @@ from polypnet.data.augment import Augmenter, TripletAugmenter
 
 
 class LciMulticlassDataset(PolypMulticlassDataset):
-    def __init__(self, root_dir: str,
+    def __init__(
+        self,
+        root_dir: str,
         shape=(448, 448),
         image_dir="images",
         mask_dir="mask_images",
         cls_dir="label_images",
         in_memory=False,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(shape=shape, **kwargs)
 
@@ -40,7 +42,7 @@ class LciMulticlassDataset(PolypMulticlassDataset):
         return (
             self._triplets[index]["image"],
             self._triplets[index]["mask"],
-            self._triplets[index]["cls"]
+            self._triplets[index]["cls"],
         )
 
     def _get_image_triplet(self, index) -> Tuple[Any, Any, Any]:
@@ -88,9 +90,9 @@ class LciMulticlassDataset(PolypMulticlassDataset):
         im = Image.open(path).convert("RGB")
 
         arr = np.array(im)
-        if (len(arr.shape) == 2):
+        if len(arr.shape) == 2:
             arr = np.stack([arr] * 3)
-        elif (len(arr.shape) == 3):
+        elif len(arr.shape) == 3:
             arr = np.transpose(arr, (2, 0, 1))
         else:
             raise ValueError("Unsupported shape")
@@ -102,28 +104,26 @@ class LciMulticlassDataset(PolypMulticlassDataset):
         self._path_contents = {}
 
         for image_name in os.listdir(self.image_dir):
-            image_name, ext = image_name.split('.')
+            image_name, ext = image_name.split(".")
             image_path = os.path.join(self.image_dir, image_name + ".jpeg")
             mask_path = os.path.join(self.mask_dir, image_name + ".png")
             cls_path = os.path.join(self.cls_dir, image_name + ".png")
 
-            if ext not in ('jpg', 'jpeg', 'png'):
-                logger.warning(f'Skipping file {image_path}')
+            if ext not in ("jpg", "jpeg", "png"):
+                logger.warning(f"Skipping file {image_path}")
                 continue
 
             if not os.path.exists(mask_path):
-                logger.warning(f'No mask found for {image_path}')
+                logger.warning(f"No mask found for {image_path}")
                 continue
 
             if not os.path.exists(cls_path):
-                logger.warning(f'No label found for {image_path}')
+                logger.warning(f"No label found for {image_path}")
                 continue
 
-            self._triplets.append({
-                'image': image_path,
-                'mask': mask_path,
-                "cls": cls_path
-            })
+            self._triplets.append(
+                {"image": image_path, "mask": mask_path, "cls": cls_path}
+            )
 
     @property
     def image_dir(self) -> str:
@@ -139,15 +139,8 @@ class LciMulticlassDataset(PolypMulticlassDataset):
 
 
 class BalancedLciDataset(LciMulticlassDataset):
-    def __init__(self,
-        root_dir: str,
-        balance_ratio=1,
-        **kwargs
-    ):
-        super().__init__(
-            root_dir,
-            **kwargs
-        )
+    def __init__(self, root_dir: str, balance_ratio=1, **kwargs):
+        super().__init__(root_dir, **kwargs)
         self.balance_ratio = balance_ratio
         self._balance_data()
 
@@ -198,6 +191,7 @@ class BalancedLciDataset(LciMulticlassDataset):
             total_add = total_add + add_counts[td]
             self._triplets.append(t)
             i += 1
+
 
 def test_1():
     path = "data/LCI_polyps_published/label_images/0a383a74579b2f6875e51b971f3ae0ae.png"
