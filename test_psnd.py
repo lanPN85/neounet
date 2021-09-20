@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import shutup
+shutup.please()
+
 import os
 import pydoc
 import time

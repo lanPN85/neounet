@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+from PIL import Image
 from typing import Any, List, Tuple
 from torchvision.io import read_image
 from torchvision import transforms as ttf

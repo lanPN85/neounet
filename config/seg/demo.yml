@@ -1,46 +1,34 @@
 name: NeoUNet.Demo
 
-val_on_test: true
+val_on_test: false
 from_segment_model: null
 
 trainer:
   resume_from_checkpoint: null
   max_epochs: 2
   gpus: 0
-  auto_select_gpus: true
+  auto_select_gpus: false
+  overfit_batches: 10
 
 dataset:
-  cls: polypnet.data.full.FullDataset
+  cls: polypnet.data.cvc.CvcDataset
   kwargs:
-    root_dir: data/all_datasets/TrainDataset
-    image_dir: image
-    mask_dir: mask
+    root_dir: data/CVC-ClinicDB
+
+val_dataset:
+  split_from_train: true
+  split_ratio: 0.2
+  cls: polypnet.data.cvc.CvcDataset
 
 loader:
-  batch_size: 12
-  num_workers: 4
+  batch_size: 2
+  num_workers: 2
 
 test_datasets:
-- cls: polypnet.data.full.FullDataset
+- cls: polypnet.data.cvc.CvcDataset
   kwargs:
-    root_dir: data/all_datasets/TestDataset/CVC-ColonDB
-  name: colondb
-- cls: polypnet.data.full.FullDataset
-  kwargs:
-    root_dir: data/all_datasets/TestDataset/CVC-300
-  name: cvc300
-- cls: polypnet.data.full.FullDataset
-  kwargs:
-    root_dir: data/all_datasets/TestDataset/CVC-ClinicDB
-  name: clinicdb
-- cls: polypnet.data.full.FullDataset
-  kwargs:
-    root_dir: data/all_datasets/TestDataset/ETIS-LaribPolypDB
-  name: etis
-- cls: polypnet.data.full.FullDataset
-  kwargs:
-    root_dir: data/all_datasets/TestDataset/Kvasir
-  name: kvasir
+    root_dir: data/CVC-ClinicDB
+  name: default
 
 test_loader:
   num_workers: 2

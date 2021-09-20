@@ -1,7 +1,7 @@
 name: "test"
 
 # Whether to use MLflow for tracking
-with_mlflow: false
+with_mlflow: true
 
 # Toggles validation on test
 val_on_test: false

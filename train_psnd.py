@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import shutup
+shutup.please()
+
 import os
 import pytorch_lightning as pl
 import torch
@@ -198,13 +201,13 @@ def main():
         )
     else:
         common_ckpoint_args = dict(
-            dirpath=ckpoint_dir, save_last=True, verbose=True, period=1
+            dirpath=ckpoint_dir, save_last=True, verbose=True
         )
 
     mlflow_logger = None
     if config.with_mlflow:
         # Get mlflow username and password
-        mlflow_dir = os.path.join(result_dir, "mlflow")
+        mlflow_dir = os.path.join(result_dir, "mlruns")
         mlflow_url = read_mlflow_auth()
 
         if mlflow_url is not None:
@@ -220,7 +223,7 @@ def main():
             tags = {}
         tags["mlflow.runName"] = run_name
         _logger = pl.loggers.MLFlowLogger(
-            experiment_name="PolypUnet",
+            experiment_name="Default",
             save_dir=mlflow_dir,
             tracking_uri=mlflow_url,
             tags=tags,

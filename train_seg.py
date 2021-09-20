@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import shutup
+shutup.please()
+
 import os
 import pytorch_lightning as pl
 import torch
@@ -167,14 +170,14 @@ def main():
         )
     else:
         common_ckpoint_args = dict(
-            dirpath=ckpoint_dir, save_last=True, verbose=True, period=1
+            dirpath=ckpoint_dir, save_last=True, verbose=True
         )
 
     mlflow_logger = None
     checkpoint_callback = None
     if config.with_mlflow:
         # Get mlflow username and password
-        mlflow_dir = os.path.join(result_dir, "mlflow")
+        mlflow_dir = os.path.join(result_dir, "mlruns")
         mlflow_url = read_mlflow_auth()
 
         if mlflow_url is not None:
@@ -183,7 +186,6 @@ def main():
             logger.warning(
                 "No auth/mlflow.yml file found. Add this file containing your username and password to use remote MLflow. See auth/mlflow.example.yml for details"
             )
-            return
 
         # Setup MLflow logger
         tags = config.tags
@@ -191,7 +193,7 @@ def main():
             tags = {}
         tags["mlflow.runName"] = run_name
         _logger = pl.loggers.MLFlowLogger(
-            experiment_name="PolypUnet",
+            experiment_name="Default",
             save_dir=mlflow_dir,
             tracking_uri=mlflow_url,
             tags=tags,
