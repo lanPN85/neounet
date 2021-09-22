@@ -271,14 +271,13 @@ class HarDNet(nn.Module):
         return out_branch
 
 
-def hardnet(arch=68, pretrained=True, device="cpu", **kwargs):
-    if arch == 68:
-        model = HarDNet(arch=68)
-        if pretrained:
-            # model_dir = os.path.join(os.path.expanduser("~"), ".cache/torch/hub/checkpoints")
-            state_dict = load_state_dict_from_url(
-                "https://github.com/PingoLH/Pytorch-HarDNet/raw/master/hardnet68.pth",
-                map_location=device,
-            )
-            model.load_state_dict(state_dict)
+def hardnet(pretrained=True, device="cpu", **kwargs):
+    model = HarDNet(arch=68)
+    if pretrained:
+        # model_dir = os.path.join(os.path.expanduser("~"), ".cache/torch/hub/checkpoints")
+        state_dict = load_state_dict_from_url(
+            "https://github.com/PingoLH/Pytorch-HarDNet/raw/master/hardnet68.pth",
+            map_location=device,
+        )
+        model.load_state_dict(state_dict)
     return model
