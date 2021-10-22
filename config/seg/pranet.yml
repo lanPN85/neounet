@@ -1,4 +1,4 @@
-name: NeoUNet.FullDataset.1
+name: PraNet.FullDataset.1
 
 val_on_test: true
 from_segment_model: null
@@ -46,7 +46,7 @@ test_loader:
   num_workers: 2
 
 model:
-  cls: polypnet.model.neounet.NeoUNet
+  cls: polypnet.model.pranet.PraNet_ResNet.CRANet
   kwargs: {}
 
 wrapper:

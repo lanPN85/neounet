@@ -1,0 +1,7 @@
+.mypy_cache/
+.vscode/
+.pytest_cache/
+.git/
+*.pyc
+results/*
+data/

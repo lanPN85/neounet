@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from polypnet.model.gcpa.encoders.hardnet_68 import hardnet
+from polypnet.model.hardnet_68 import hardnet
 from polypnet.model.attn import AdditiveAttnGate
 
 

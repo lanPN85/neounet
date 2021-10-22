@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-import shutup
-shutup.please()
-
 import os
 import pydoc
 import time
 import pytorch_lightning as pl
 import torch
 
+from PIL import Image
 from torch.utils.data import DataLoader, random_split
 from omegaconf import OmegaConf
 from argparse import ArgumentParser
@@ -16,8 +14,10 @@ from loguru import logger
 from tqdm import tqdm
 from yaml import load
 
+from polypnet.losses import MultiscaleLoss, CompoundLoss
 from polypnet.model import UnetClassifyModelWrapper
-from polypnet.config import load_config, print_config, load_class_from_conf
+from polypnet.config import load_config, print_config,\
+    load_class_from_conf, read_mlflow_auth
 from polypnet.callbacks import save_multiclass_image_3tile, save_multiclass_image_mask
 from polypnet.data import NoOpTripletAugmenter
 from polypnet.data.func import triplet_collate_fn_2
@@ -41,7 +41,9 @@ def main():
     config_paths = ["config/defaults.yml"]
     for cf in args.config:
         config_paths.append(cf)
-    config = load_config(config_paths)
+    config = load_config(
+        config_paths
+    )
 
     print_config(config)
 
@@ -52,13 +54,12 @@ def main():
 
     if args.model is not None:
         model_wrapper = UnetClassifyModelWrapper.load_from_checkpoint(
-            args.model,
-            model=model,
+            args.model, model=model,
             optimizer=optimizer,
             lr_scheduler=scheduler,
             strict=False,
             test_names=[args.d],
-            **config.wrapper.kwargs,
+            **config.wrapper.kwargs
         )
     else:
         model_wrapper = UnetClassifyModelWrapper(
@@ -66,7 +67,7 @@ def main():
             optimizer=optimizer,
             lr_scheduler=scheduler,
             test_names=[args.d],
-            **config.wrapper.kwargs,
+            **config.wrapper.kwargs
         )
     model_wrapper.eval()
 
@@ -76,25 +77,20 @@ def main():
     logger.info("Loading test dataset")
 
     try:
-        test_dataset_conf = next(
-            filter(lambda x: x.name == args.d, config.test_datasets)
-        )
+        test_dataset_conf = next(filter(
+            lambda x: x.name == args.d, config.test_datasets
+        ))
     except StopIteration:
         logger.error(f"No dataset with name '{args.d}' found in config")
         exit(1)
 
     test_dataset = load_class_from_conf(
-        test_dataset_conf, augmenter=NoOpTripletAugmenter(), return_paths=True
+        test_dataset_conf, augmenter=NoOpTripletAugmenter(),
+        return_paths=True
     )
 
     # Create result directories
     if not args.skip_img or not args.skip_timing:
-        test_dataset2 = load_class_from_conf(
-            test_dataset_conf,
-            augmenter=NoOpTripletAugmenter(),
-            return_paths=True,
-            shape=model_wrapper.test_input_size,
-        )
         if not args.skip_img and not args.save_dir:
             raise ValueError("No save directory specified")
 
@@ -104,32 +100,30 @@ def main():
 
         time_total, time_count = 0, 0
 
-        for image_t, mask_t, cls_t, image_path, mask_path, cls_path in tqdm(
-            test_dataset
-        ):
+        for image_t, mask_t, cls_t, image_path, mask_path, cls_path in tqdm(test_dataset):
             name = image_path.split("/")[-1]
             name = name.split(".")[0]
+            cls_img = Image.open(cls_path)
+            cls_shape = cls_img.size[::-1]
 
             if not args.skip_img:
-                save_multiclass_image_3tile(
-                    model_wrapper,
-                    triplet_collate_fn_2,
-                    image_t,
-                    mask_t,
-                    cls_t,
-                    save_path=os.path.join(args.save_dir, f"{name}.tiles.jpg"),
-                )
+                # save_multiclass_image_3tile(
+                #     model_wrapper, triplet_collate_fn_2,
+                #     image_t, mask_t, cls_t,
+                #     save_path=os.path.join(args.save_dir, f"{name}.tiles.jpg")
+                # )
                 save_multiclass_image_mask(
-                    model_wrapper,
-                    triplet_collate_fn_2,
-                    image_t,
-                    mask_t,
-                    cls_t,
-                    save_path=os.path.join(args.save_dir, f"{name}.mask.jpg"),
+                    model_wrapper, triplet_collate_fn_2,
+                    image_t, mask_t, cls_t,
+                    save_path=os.path.join(args.save_dir, f"{name}.png"),
+                    shape=cls_shape,
+                    crop=False
                 )
 
             if not args.skip_timing:
-                image, _, _ = triplet_collate_fn_2([(image_t, mask_t, cls_t)])
+                image, _, _ = triplet_collate_fn_2(
+                    [(image_t, mask_t, cls_t)]
+                )
                 image = image.to(model_wrapper.device)
                 start = time.time()
                 model_wrapper(image)
@@ -149,7 +143,11 @@ def main():
         callbacks = []
 
         if args.per_file is not None:
-            callbacks.append(CsvLogCallback(save_path=args.per_file))
+            callbacks.append(
+                CsvLogCallback(
+                    save_path=args.per_file
+                )
+            )
 
         test_dataloader = DataLoader(
             test_dataset,
@@ -157,20 +155,19 @@ def main():
             pin_memory=True,
             collate_fn=triplet_collate_fn_2,
             batch_size=1,
-            **config.test_loader,
+            **config.test_loader
         )
         trainer = pl.Trainer(
             default_root_dir="results",
             terminate_on_nan=True,
             callbacks=callbacks,
-            **config.trainer,
+            **config.trainer
         )
         trainer.test(
             model=model_wrapper,
             test_dataloaders=[test_dataloader],
-            ckpt_path=args.model,
+            ckpt_path=args.model
         )
-
 
 if __name__ == "__main__":
     main()

@@ -1,40 +1,50 @@
-name: NeoUNet.Demo
-
+name: Unet.Eso.1
+with_mlflow: false
 val_on_test: false
+
 from_segment_model: null
 
 trainer:
   resume_from_checkpoint: null
-  max_epochs: 2
-  gpus: 0
-  auto_select_gpus: false
-  overfit_batches: 10
+  max_epochs: 100
+  gpus: 1
+  auto_select_gpus: true
 
 dataset:
-  cls: polypnet.data.cvc.CvcDataset
+  cls: polypnet.data.upper.UpperPolypDataset
   kwargs:
-    root_dir: data/CVC-ClinicDB
+    root_dir: data/stomach/train
+    image_dir: images
+    mask_dir: masks
 
 val_dataset:
   split_from_train: true
-  split_ratio: 0.2
-  cls: polypnet.data.cvc.CvcDataset
+  split_ratio: 0.15
+  split_seed: 66
 
 loader:
-  batch_size: 2
-  num_workers: 2
+  batch_size: 8
+  num_workers: 16
 
 test_datasets:
-- cls: polypnet.data.cvc.CvcDataset
+- cls: polypnet.data.upper.UpperPolypDataset
   kwargs:
-    root_dir: data/CVC-ClinicDB
+    root_dir: data/stomach/test
+    image_dir: images
+    mask_dir: masks
   name: default
+- cls: polypnet.data.upper.UpperPolypDataset
+  kwargs:
+    root_dir: data/stomach/train
+    image_dir: images
+    mask_dir: masks
+  name: train
 
 test_loader:
   num_workers: 2
 
 model:
-  cls: polypnet.model.neounet.NeoUNet
+  cls: polypnet.model.unet.UNet
   kwargs: {}
 
 wrapper:
@@ -50,6 +60,11 @@ wrapper:
     - - 448
       - 448
 
+agc:
+  enabled: false
+  kwargs:
+    clipping: 0.05
+
 optimizer:
   cls: torch.optim.SGD
   kwargs:
@@ -60,15 +75,15 @@ optimizer:
 scheduler:
   cls: polypnet.optim.warmup_cos.CosineAnnealingWarmupLR
   kwargs:
-    T_max: 195
+    T_max: 95
     warmup_epochs: 5
 
 callbacks:
   early_stop:
-    patience: 30
+    patience: 20
   result_sample:
-    images_per_epoch: 5
-    skip_first: 0
+    images_per_epoch: 20
+    skip_first: 5
 
 augment:
   kwargs:

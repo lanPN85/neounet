@@ -34,3 +34,14 @@ train-psnd:
 	$(DOCKER_RUN) python3 train_psnd.py -c $(CONFIG)
 
 .PHONY: image image-gpu train-seg train-psnd test-seg test-psnd
+
+
+RFLAGS=
+RTARGET=s@172.18.0.1
+
+RTARGET_DIR=~/lanpn/neounet/
+
+rpush:
+	rsync -avh --progress $(RFLAGS) \
+		--exclude-from='.pushignore' \
+		. $(RTARGET):$(RTARGET_DIR)

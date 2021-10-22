@@ -1,52 +1,50 @@
-name: NeoUNet.FullDataset.1
-
+name: Pranet.Eso.1
+with_mlflow: false
 val_on_test: true
+
 from_segment_model: null
 
 trainer:
   resume_from_checkpoint: null
-  max_epochs: 200
+  max_epochs: 33
   gpus: 1
   auto_select_gpus: true
 
 dataset:
-  cls: polypnet.data.full.FullDataset
+  cls: polypnet.data.upper.UpperPolypDataset
   kwargs:
-    root_dir: data/all_datasets/TrainDataset
-    image_dir: image
-    mask_dir: mask
+    root_dir: data/stomach/train
+    image_dir: images
+    mask_dir: masks
+
+val_dataset:
+  split_from_train: true
+  split_ratio: 0.15
+  split_seed: 66
 
 loader:
-  batch_size: 12
+  batch_size: 8
   num_workers: 16
 
 test_datasets:
-- cls: polypnet.data.full.FullDataset
+- cls: polypnet.data.upper.UpperPolypDataset
   kwargs:
-    root_dir: data/all_datasets/TestDataset/CVC-ColonDB
-  name: colondb
-- cls: polypnet.data.full.FullDataset
+    root_dir: data/stomach/test
+    image_dir: images
+    mask_dir: masks
+  name: default
+- cls: polypnet.data.upper.UpperPolypDataset
   kwargs:
-    root_dir: data/all_datasets/TestDataset/CVC-300
-  name: cvc300
-- cls: polypnet.data.full.FullDataset
-  kwargs:
-    root_dir: data/all_datasets/TestDataset/CVC-ClinicDB
-  name: clinicdb
-- cls: polypnet.data.full.FullDataset
-  kwargs:
-    root_dir: data/all_datasets/TestDataset/ETIS-LaribPolypDB
-  name: etis
-- cls: polypnet.data.full.FullDataset
-  kwargs:
-    root_dir: data/all_datasets/TestDataset/Kvasir
-  name: kvasir
+    root_dir: data/stomach/train
+    image_dir: images
+    mask_dir: masks
+  name: train
 
 test_loader:
   num_workers: 2
 
 model:
-  cls: polypnet.model.neounet.NeoUNet
+  cls: polypnet.model.pranet.PraNet_ResNet.CRANet
   kwargs: {}
 
 wrapper:
@@ -62,6 +60,11 @@ wrapper:
     - - 448
       - 448
 
+agc:
+  enabled: false
+  kwargs:
+    clipping: 0.05
+
 optimizer:
   cls: torch.optim.SGD
   kwargs:
@@ -72,12 +75,12 @@ optimizer:
 scheduler:
   cls: polypnet.optim.warmup_cos.CosineAnnealingWarmupLR
   kwargs:
-    T_max: 195
+    T_max: 28
     warmup_epochs: 5
 
 callbacks:
   early_stop:
-    patience: 30
+    patience: 20
   result_sample:
     images_per_epoch: 20
     skip_first: 5

@@ -3,6 +3,7 @@ import torch
 import random
 import pytorch_lightning as pl
 
+from torchvision.transforms import Resize
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from torchvision.utils import save_image
 from loguru import logger
@@ -61,15 +62,17 @@ def save_multiclass_image_3tile(
 
 
 def save_multiclass_image_mask(
-    pl_module, collate_fn, raw_image, raw_label, raw_cls, save_path
+    pl_module, collate_fn,
+    raw_image, raw_label, raw_cls,
+    save_path,
+    shape=None,
+    crop=False
 ):
     image, _, _ = collate_fn([(raw_image, raw_label, raw_cls)])
     batch_pred = pl_module(image.to(pl_module.device))[0][0].cpu()
     batch_pred = torch.sigmoid(batch_pred)  # 2 x H x W
 
-    seg_mask = (
-        torch.max(batch_pred, dim=0, keepdim=True).values >= 0.5
-    ).int()  # 1 x H x W
+    seg_mask = (torch.max(batch_pred, dim=0, keepdim=True).values >= 0.5).int()  # 1 x H x W
     class_mask = torch.max(batch_pred, dim=0, keepdim=True).indices
     green_mask = (class_mask == 0).int() * seg_mask
     red_mask = (class_mask == 1).int() * seg_mask
@@ -78,7 +81,15 @@ def save_multiclass_image_mask(
     mask[1, ...] = 255 * green_mask
     mask[0, ...] = 255 * red_mask
 
-    save_image([mask.float()], save_path, nrow=1, normalize=True, range=(0, 255))
+    if shape is not None:
+        if not crop:
+            mask = Resize(shape)(mask)
+        else:
+            mask = mask[:, :shape[0], :shape[1]]
+
+    save_image([
+        mask.float()
+    ], save_path, nrow=1, normalize=True, range=(0, 255))
 
 
 class ResultSampleCallback(pl.callbacks.Callback):
