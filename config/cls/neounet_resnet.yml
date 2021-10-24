@@ -1,0 +1,101 @@
+name: NeoUNetResNet.NeoPolyp.1
+
+val_on_test: true
+
+trainer:
+  resume_from_checkpoint: null
+  gpus: 1
+  max_epochs: 20
+  auto_select_gpus: true
+
+scheduler:
+  cls: polypnet.optim.warmup_cos.CosineAnnealingWarmupLR
+  kwargs:
+    T_max: 18
+    warmup_epochs: 2
+
+dataset:
+  cls: polypnet.data.lci.BalancedLciDataset
+  kwargs:
+    balance_ratio: 1
+    root_dir: "data/WLIv5_pub/Train"
+
+val_dataset:
+  split_from_train: true
+  split_ratio: 0.1
+
+from_segment_model: "results/NeoUNetResNet.FullDataset.1/checkpoints/last.ckpt"
+# from_segment_model: null
+
+loader:
+  batch_size: 16
+  num_workers: 16
+
+wrapper:
+  kwargs:
+    seg_weight: 0.3
+    test_input_size:
+      - 352
+      - 352
+    train_sizes:
+      - [256, 256]
+      - [352, 352]
+      - [448, 448]
+
+test_datasets:
+  - cls: polypnet.data.lci.LciMulticlassDataset
+    kwargs:
+      root_dir: "data/WLIv5_pub/Test"
+    name: "default"
+  - cls: polypnet.data.lci.LciMulticlassDataset
+    kwargs:
+      root_dir: "data/WLIv5_pub_noud/Test"
+    name: "noud"
+  - cls: polypnet.data.lci.LciMulticlassDataset
+    kwargs:
+      root_dir: "data/WLIv5_pub/Train"
+    name: "train"
+
+test_loader:
+  num_workers: 2
+
+model:
+  cls: polypnet.model.neounet_resnet.NeoUNetResNet
+  kwargs:
+    num_classes: 2
+
+optimizer:
+  cls: torch.optim.SGD
+  kwargs:
+    lr: 1.e-3
+    momentum: 0.9
+    nesterov: true
+
+loss:
+  losses:
+    - cls: polypnet.losses.proba.BinaryCrossEntropyLoss
+      kwargs: {}
+    - cls: polypnet.losses.region.TverskyLoss
+      kwargs:
+        alpha: 0.3
+
+label_loss:
+  losses:
+    - cls: polypnet.losses.masked.MaskedBinaryCrossEntropyLoss
+      kwargs: {}
+    - cls: polypnet.losses.masked.FocalMaskedTverskyLoss
+      kwargs:
+        alpha: 0.3
+
+augment:
+  kwargs:
+    prob: 0.7
+    jitter_prob: 0
+    blur_prob: 0
+
+callbacks:
+  early_stop:
+    patience: 10
+  result_sample:
+    images_per_epoch: 30
+    skip_first: 5

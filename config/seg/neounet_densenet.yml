@@ -1,0 +1,96 @@
+name: NeoUNetDenseNet.FullDataset.1
+
+val_on_test: true
+from_segment_model: null
+
+trainer:
+  resume_from_checkpoint: null
+  max_epochs: 200
+  gpus: 1
+  auto_select_gpus: true
+
+dataset:
+  cls: polypnet.data.full.FullDataset
+  kwargs:
+    root_dir: data/all_datasets/TrainDataset
+    image_dir: image
+    mask_dir: mask
+
+loader:
+  batch_size: 4
+  num_workers: 8
+
+test_datasets:
+- cls: polypnet.data.full.FullDataset
+  kwargs:
+    root_dir: data/all_datasets/TestDataset/CVC-ColonDB
+  name: colondb
+- cls: polypnet.data.full.FullDataset
+  kwargs:
+    root_dir: data/all_datasets/TestDataset/CVC-300
+  name: cvc300
+- cls: polypnet.data.full.FullDataset
+  kwargs:
+    root_dir: data/all_datasets/TestDataset/CVC-ClinicDB
+  name: clinicdb
+- cls: polypnet.data.full.FullDataset
+  kwargs:
+    root_dir: data/all_datasets/TestDataset/ETIS-LaribPolypDB
+  name: etis
+- cls: polypnet.data.full.FullDataset
+  kwargs:
+    root_dir: data/all_datasets/TestDataset/Kvasir
+  name: kvasir
+
+test_loader:
+  num_workers: 2
+
+model:
+  cls: polypnet.model.neounet_densenet.NeoUNetDenseNet
+  kwargs: {}
+
+wrapper:
+  kwargs:
+    test_input_size:
+    - 352
+    - 352
+    train_sizes:
+    - - 256
+      - 256
+    - - 352
+      - 352
+    - - 448
+      - 448
+
+optimizer:
+  cls: torch.optim.SGD
+  kwargs:
+    lr: 0.001
+    momentum: 0.9
+    nesterov: true
+
+scheduler:
+  cls: polypnet.optim.warmup_cos.CosineAnnealingWarmupLR
+  kwargs:
+    T_max: 195
+    warmup_epochs: 5
+
+callbacks:
+  early_stop:
+    patience: 30
+  result_sample:
+    images_per_epoch: 20
+    skip_first: 5
+
+augment:
+  kwargs:
+    prob: 0.7
+
+loss:
+  kwargs: {}
+  losses:
+  - cls: polypnet.losses.proba.BinaryCrossEntropyLoss
+    kwargs: {}
+  - cls: polypnet.losses.region.TverskyLoss
+    kwargs:
+      alpha: 0.3
